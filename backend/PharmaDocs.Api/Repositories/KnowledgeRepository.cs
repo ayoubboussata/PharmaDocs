@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 using PharmaDocs.Api.Data;
 using PharmaDocs.Api.DTOs.Knowledge;
 using PharmaDocs.Api.Models;
@@ -35,5 +37,19 @@ public class KnowledgeRepository : IKnowledgeRepository
             .ToListAsync(ct);
 
         return sources.OrderByDescending(s => s.IndexedAt).ToList();
+    }
+
+    public async Task<IReadOnlyList<RetrievedChunk>> SearchAsync(
+        float[] queryEmbedding, int k, CancellationToken ct = default)
+    {
+        var target = new Vector(queryEmbedding);
+
+        // pgvector doet de cosinus-afstand in de databank; enkel de top-k komt terug.
+        return await _db.KnowledgeChunks
+            .OrderBy(c => c.Embedding!.CosineDistance(target))
+            .Take(k)
+            .Select(c => new RetrievedChunk(
+                c.SourceName, c.Content, c.Embedding!.CosineDistance(target)))
+            .ToListAsync(ct);
     }
 }

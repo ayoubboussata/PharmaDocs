@@ -60,6 +60,35 @@ public class EmbeddingClient : IEmbeddingClient
             .ToList();
     }
 
+    public async Task<float[]> EmbedQueryAsync(string question, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await _http.PostAsJsonAsync("/embed-query", new { text = question }, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            throw new ServiceUnavailableException(
+                "De AI-service is niet bereikbaar of reageerde niet op tijd.");
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var detail = await ReadDetailAsync(response, ct);
+            throw new ServiceUnavailableException(
+                $"Embeddings zijn niet beschikbaar ({(int)response.StatusCode}): {detail}");
+        }
+
+        var payload = await response.Content.ReadFromJsonAsync<EmbedQueryResponse>(ct)
+            ?? throw new ServiceUnavailableException("Leeg antwoord van de AI-service.");
+        return payload.Embedding;
+    }
+
     private static async Task<string> ReadDetailAsync(HttpResponseMessage response, CancellationToken ct)
     {
         try
@@ -87,5 +116,8 @@ public class EmbeddingClient : IEmbeddingClient
     private sealed record ChunkPayload(
         [property: JsonPropertyName("index")] int Index,
         [property: JsonPropertyName("content")] string Content,
+        [property: JsonPropertyName("embedding")] float[] Embedding);
+
+    private sealed record EmbedQueryResponse(
         [property: JsonPropertyName("embedding")] float[] Embedding);
 }

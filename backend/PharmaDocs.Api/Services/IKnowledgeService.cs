@@ -18,4 +18,10 @@ public interface IKnowledgeService
 
     /// <summary>Overzicht van de geïndexeerde bronnen.</summary>
     Task<IReadOnlyList<KnowledgeSourceDto>> GetSourcesAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Beantwoordt een vraag met RAG: query-embedding → dichtste stukken (pgvector) →
+    /// gegrond antwoord van Claude met bronvermelding.
+    /// </summary>
+    Task<AskResponse> AskAsync(string question, CancellationToken ct = default);
 }

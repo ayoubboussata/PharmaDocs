@@ -43,4 +43,18 @@ public class KnowledgeController : ControllerBase
         var sources = await _service.GetSourcesAsync(ct);
         return Ok(sources);
     }
+
+    /// <summary>
+    /// Stelt een vraag aan de kennisassistent (RAG): het antwoord steunt enkel op de
+    /// geïndexeerde procedures, met bronvermelding.
+    /// </summary>
+    [HttpPost("ask")]
+    [ProducesResponseType(typeof(AskResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<AskResponse>> Ask(AskRequest request, CancellationToken ct)
+    {
+        var answer = await _service.AskAsync(request.Question, ct);
+        return Ok(answer);
+    }
 }
