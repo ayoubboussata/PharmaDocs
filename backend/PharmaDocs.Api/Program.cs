@@ -70,6 +70,11 @@ builder.Services.AddHttpClient<IEmbeddingClient, EmbeddingClient>(client =>
     client.BaseAddress = new Uri(aiSettings.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
 });
+builder.Services.AddHttpClient<IRagAnswerClient, RagAnswerClient>(client =>
+{
+    client.BaseAddress = new Uri(aiSettings.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
+});
 
 // --- Dependency injection: gelaagde structuur ---
 builder.Services.AddScoped<IUserRepository, UserRepository>();

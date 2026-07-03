@@ -10,14 +10,20 @@ namespace PharmaDocs.Api.Services;
 public class KnowledgeService : IKnowledgeService
 {
     private const long MaxBytes = 10 * 1024 * 1024; // 10 MB
+    private const int TopK = 4; // aantal fragmenten dat als context naar Claude gaat
 
     private readonly IKnowledgeRepository _repository;
     private readonly IEmbeddingClient _embeddingClient;
+    private readonly IRagAnswerClient _answerClient;
 
-    public KnowledgeService(IKnowledgeRepository repository, IEmbeddingClient embeddingClient)
+    public KnowledgeService(
+        IKnowledgeRepository repository,
+        IEmbeddingClient embeddingClient,
+        IRagAnswerClient answerClient)
     {
         _repository = repository;
         _embeddingClient = embeddingClient;
+        _answerClient = answerClient;
     }
 
     public async Task<KnowledgeIngestResponse> IngestAsync(IFormFile file, CancellationToken ct = default)
@@ -49,6 +55,23 @@ public class KnowledgeService : IKnowledgeService
 
     public Task<IReadOnlyList<KnowledgeSourceDto>> GetSourcesAsync(CancellationToken ct = default)
         => _repository.GetSourcesAsync(ct);
+
+    public async Task<AskResponse> AskAsync(string question, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(question))
+            throw new BadRequestException("Stel een vraag.");
+
+        // 1. Vraag embedden → 2. dichtste stukken ophalen (pgvector).
+        var queryVector = await _embeddingClient.EmbedQueryAsync(question, ct);
+        var chunks = await _repository.SearchAsync(queryVector, TopK, ct);
+
+        // 3. Fragmenten als context naar Claude, dat gegrond antwoordt met bronvermelding.
+        var contexts = chunks.Select(c => new RagContext(c.SourceName, c.Content)).ToList();
+        var answer = await _answerClient.AnswerAsync(question, contexts, ct);
+
+        var sources = chunks.Select(c => c.SourceName).Distinct().ToList();
+        return new AskResponse(answer, sources);
+    }
 
     private static void ValidatePdf(IFormFile file)
     {

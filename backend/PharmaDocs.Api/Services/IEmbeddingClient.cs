@@ -14,4 +14,10 @@ public interface IEmbeddingClient
     /// </summary>
     Task<IReadOnlyList<EmbeddedChunk>> EmbedDocumentAsync(
         Stream pdfStream, string fileName, string contentType, CancellationToken ct = default);
+
+    /// <summary>
+    /// Embedt één vraag (input_type=query) voor de vectorzoektocht. Gooit
+    /// <see cref="Common.Exceptions.ServiceUnavailableException"/> als embeddings niet beschikbaar zijn.
+    /// </summary>
+    Task<float[]> EmbedQueryAsync(string question, CancellationToken ct = default);
 }

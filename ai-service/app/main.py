@@ -14,10 +14,12 @@ import io
 
 import pdfplumber
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from pydantic import BaseModel
 
 from .config import get_settings
 from .embeddings import EmbeddingError, chunk_text, embed_texts
 from .extraction import ExtractionError, extract_invoice
+from .rag import AnswerError, answer_question
 
 app = FastAPI(
     title="PharmaDocs AI-service",
@@ -131,3 +133,40 @@ async def embed_document(file: UploadFile = File(...)) -> dict[str, object]:
             for i, (content, vector) in enumerate(zip(chunks, vectors))
         ],
     }
+
+
+# --- RAG-chat (Fase 4 Dag 9): query-embedding + gegrond antwoord ---
+
+
+class EmbedQueryRequest(BaseModel):
+    text: str
+
+
+@app.post("/embed-query")
+def embed_query(req: EmbedQueryRequest) -> dict[str, object]:
+    """Embedt één vraag (input_type=query) voor de vectorzoektocht in de backend."""
+    try:
+        vectors = embed_texts([req.text], input_type="query")
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"embedding": vectors[0]}
+
+
+class AnswerContext(BaseModel):
+    sourceName: str
+    content: str
+
+
+class AnswerRequest(BaseModel):
+    question: str
+    contexts: list[AnswerContext] = []
+
+
+@app.post("/answer")
+def answer(req: AnswerRequest) -> dict[str, object]:
+    """Genereert een gegrond antwoord op basis van de meegestuurde fragmenten (Claude)."""
+    try:
+        text = answer_question(req.question, [c.model_dump() for c in req.contexts])
+    except AnswerError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"answer": text}
