@@ -109,7 +109,8 @@ PharmaDocs/
 - [x] **Python AI-service** — FastAPI met PDF-tekstextractie (`POST /extract`)
 - [x] **AI-factuurextractie** — `POST /extract-invoice`: PDF → Claude → gestructureerde JSON (strikte tool-use)
 - [x] **Koppeling `.NET ↔ Python`** — `POST /api/documents/upload`: backend orkestreert de AI-call en slaat het resultaat op in de DB
-- [ ] Front-end documentbeheer (upload, overzicht, detail)
+- [x] **Front-end upload & overzicht** — drag & drop-upload met laadindicator, overzichtstabel met statussen (Verwerkt/Mislukt/In behandeling)
+- [ ] Front-end detailweergave + handmatige correctie
 - [ ] RAG-kennisassistent (embeddings, chat met bronvermelding)
 
 ## Licentie
