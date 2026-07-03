@@ -10,6 +10,9 @@ public record UpdateInvoiceRequest(
     [Required, MaxLength(256)] string SupplierName,
     [Required, MaxLength(128)] string InvoiceNumber,
     DateOnly? InvoiceDate,
+    [Range(0, 9_999_999)] decimal SubtotalAmount,
+    [Range(0, 100)] decimal? VatRate,
+    [Range(0, 9_999_999)] decimal VatAmount,
     [Range(0, 9_999_999)] decimal TotalAmount,
     [Required, MaxLength(8)] string Currency,
     List<UpdateLineItemRequest> LineItems);

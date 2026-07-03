@@ -85,6 +85,9 @@ public class InvoiceExtractionClient : IInvoiceExtractionClient
         [property: JsonPropertyName("supplierName")] string SupplierName,
         [property: JsonPropertyName("invoiceNumber")] string InvoiceNumber,
         [property: JsonPropertyName("invoiceDate")] string? InvoiceDate,
+        [property: JsonPropertyName("subtotalAmount")] decimal SubtotalAmount,
+        [property: JsonPropertyName("vatRate")] decimal? VatRate,
+        [property: JsonPropertyName("vatAmount")] decimal VatAmount,
         [property: JsonPropertyName("totalAmount")] decimal TotalAmount,
         [property: JsonPropertyName("currency")] string Currency,
         [property: JsonPropertyName("lineItems")] List<LineItemPayload> LineItems)
@@ -93,6 +96,9 @@ public class InvoiceExtractionClient : IInvoiceExtractionClient
             SupplierName,
             InvoiceNumber,
             ParseDate(InvoiceDate),
+            SubtotalAmount,
+            VatRate,
+            VatAmount,
             TotalAmount,
             string.IsNullOrWhiteSpace(Currency) ? "EUR" : Currency,
             (LineItems ?? new()).Select(l => l.ToResult()).ToList());

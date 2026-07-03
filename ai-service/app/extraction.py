@@ -42,6 +42,18 @@ INVOICE_TOOL = {
                 "type": ["string", "null"],
                 "description": "ISO-datum YYYY-MM-DD, of null.",
             },
+            "subtotalAmount": {
+                "type": "number",
+                "description": "Bedrag exclusief btw (subtotaal).",
+            },
+            "vatRate": {
+                "type": ["number", "null"],
+                "description": "Btw-percentage (bv. 6 of 21), of null als niet vermeld / meerdere tarieven.",
+            },
+            "vatAmount": {
+                "type": "number",
+                "description": "Het btw-bedrag.",
+            },
             "totalAmount": {"type": "number"},
             "currency": {"type": "string"},
             "lineItems": {
@@ -63,6 +75,9 @@ INVOICE_TOOL = {
             "supplierName",
             "invoiceNumber",
             "invoiceDate",
+            "subtotalAmount",
+            "vatRate",
+            "vatAmount",
             "totalAmount",
             "currency",
             "lineItems",

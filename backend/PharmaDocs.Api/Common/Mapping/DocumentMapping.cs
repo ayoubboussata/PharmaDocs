@@ -35,6 +35,9 @@ public static class DocumentMapping
         invoice.SupplierName,
         invoice.InvoiceNumber,
         invoice.InvoiceDate,
+        invoice.SubtotalAmount,
+        invoice.VatRate,
+        invoice.VatAmount,
         invoice.TotalAmount,
         invoice.Currency,
         invoice.LineItems.Select(l => l.ToDto()).ToList());

@@ -16,6 +16,9 @@ interface InvoiceForm {
   supplierName: string
   invoiceNumber: string
   invoiceDate: string
+  subtotalAmount: string
+  vatRate: string
+  vatAmount: string
   totalAmount: string
   currency: string
   lineItems: LineForm[]
@@ -30,6 +33,9 @@ function toForm(doc: DocumentDetail): InvoiceForm {
     supplierName: inv.supplierName,
     invoiceNumber: inv.invoiceNumber,
     invoiceDate: inv.invoiceDate ?? '',
+    subtotalAmount: String(inv.subtotalAmount),
+    vatRate: inv.vatRate == null ? '' : String(inv.vatRate),
+    vatAmount: String(inv.vatAmount),
     totalAmount: String(inv.totalAmount),
     currency: inv.currency,
     lineItems: inv.lineItems.map((l) => ({
@@ -119,6 +125,9 @@ export function DocumentDetailPage() {
         supplierName: form.supplierName,
         invoiceNumber: form.invoiceNumber,
         invoiceDate: form.invoiceDate ? form.invoiceDate : null,
+        subtotalAmount: num(form.subtotalAmount),
+        vatRate: form.vatRate.trim() === '' ? null : num(form.vatRate),
+        vatAmount: num(form.vatAmount),
         totalAmount: num(form.totalAmount),
         currency: form.currency,
         lineItems: form.lineItems.map((l) => ({
@@ -238,28 +247,63 @@ export function DocumentDetailPage() {
                         onChange={(e) => setField('invoiceDate', e.target.value)}
                       />
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <label className="block">
-                        <span className="mb-1 block text-sm text-slate-300">Totaal</span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          className={inputClass}
-                          value={form.totalAmount}
-                          onChange={(e) => setField('totalAmount', e.target.value)}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-1 block text-sm text-slate-300">Munt</span>
-                        <input
-                          className={inputClass}
-                          value={form.currency}
-                          onChange={(e) => setField('currency', e.target.value)}
-                          maxLength={8}
-                        />
-                      </label>
-                    </div>
+                    <label className="block">
+                      <span className="mb-1 block text-sm text-slate-300">Munt</span>
+                      <input
+                        className={inputClass}
+                        value={form.currency}
+                        onChange={(e) => setField('currency', e.target.value)}
+                        maxLength={8}
+                      />
+                    </label>
                   </div>
+
+                  {/* Bedragen: subtotaal → btw → totaal */}
+                  <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <label className="block">
+                      <span className="mb-1 block text-sm text-slate-300">Subtotaal (excl. btw)</span>
+                      <input
+                        inputMode="decimal"
+                        className={inputClass}
+                        value={form.subtotalAmount}
+                        onChange={(e) => setField('subtotalAmount', e.target.value)}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-sm text-slate-300">Btw-tarief %</span>
+                      <input
+                        inputMode="decimal"
+                        placeholder="—"
+                        className={inputClass}
+                        value={form.vatRate}
+                        onChange={(e) => setField('vatRate', e.target.value)}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-sm text-slate-300">Btw-bedrag</span>
+                      <input
+                        inputMode="decimal"
+                        className={inputClass}
+                        value={form.vatAmount}
+                        onChange={(e) => setField('vatAmount', e.target.value)}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-sm text-slate-300">Totaal (incl. btw)</span>
+                      <input
+                        inputMode="decimal"
+                        className={inputClass}
+                        value={form.totalAmount}
+                        onChange={(e) => setField('totalAmount', e.target.value)}
+                      />
+                    </label>
+                  </div>
+
+                  {Math.abs(num(form.subtotalAmount) + num(form.vatAmount) - num(form.totalAmount)) > 0.01 && (
+                    <p className="mt-3 text-sm text-amber-400">
+                      Let op: subtotaal + btw ({(num(form.subtotalAmount) + num(form.vatAmount)).toFixed(2)}) wijkt af van het totaal ({num(form.totalAmount).toFixed(2)}).
+                    </p>
+                  )}
                 </section>
 
                 {/* Lijnitems */}
@@ -326,9 +370,9 @@ export function DocumentDetailPage() {
 
                   <p className="mt-4 text-sm text-slate-400">
                     Som van de lijntotalen: <span className="text-slate-200">{lineSum.toFixed(2)}</span>
-                    {Math.abs(lineSum - num(form.totalAmount)) > 0.01 && (
+                    {Math.abs(lineSum - num(form.subtotalAmount)) > 0.01 && (
                       <span className="ml-2 text-amber-400">
-                        (wijkt af van het totaal {num(form.totalAmount).toFixed(2)})
+                        (wijkt af van het subtotaal {num(form.subtotalAmount).toFixed(2)})
                       </span>
                     )}
                   </p>

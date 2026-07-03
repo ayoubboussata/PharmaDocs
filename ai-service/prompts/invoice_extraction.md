@@ -24,7 +24,10 @@ Regels:
 - **Leverancier** (`supplierName`): de naam van het bedrijf dat de factuur uitschrijft (de afzender), niet de apotheek die ontvangt.
 - **Factuurnummer** (`invoiceNumber`): exact overnemen zoals op het document, inclusief tekens zoals `/` of `-`.
 - **Factuurdatum** (`invoiceDate`): normaliseer naar ISO-formaat `YYYY-MM-DD`. Een datum als `12/06/2026` is `2026-06-12` (dag/maand/jaar, Belgische notatie). Gebruik de factuurdatum, niet de vervaldatum. Als er geen factuurdatum staat: `null`.
-- **Totaalbedrag** (`totalAmount`): het eindbedrag dat betaald moet worden, inclusief BTW. Als getal, met punt als decimaalteken (bv. `467.46`). Geen valutasymbool, geen duizendtalscheiding.
+- **Subtotaal** (`subtotalAmount`): het bedrag **exclusief** btw (vaak "Subtotaal"). Als getal met punt als decimaalteken. Staat het niet expliciet maar is het af te leiden (totaal − btw), bereken het dan.
+- **Btw-tarief** (`vatRate`): het btw-percentage als getal (bv. `6` of `21`). Staat er geen enkel tarief, of meerdere verschillende tarieven, gebruik dan `null`.
+- **Btw-bedrag** (`vatAmount`): het bedrag aan btw (vaak "BTW 6%"). Als getal met punt als decimaalteken.
+- **Totaalbedrag** (`totalAmount`): het eindbedrag dat betaald moet worden, **inclusief** btw (vaak "Totaal te betalen"). Als getal, met punt als decimaalteken (bv. `467.46`). Geen valutasymbool, geen duizendtalscheiding.
 - **Munteenheid** (`currency`): ISO-code van 3 letters (bv. `EUR`). Standaard `EUR` als niets vermeld staat.
 - **Lijnitems** (`lineItems`): één item per productlijn, met:
   - `description`: de omschrijving van het product/de dienst.
