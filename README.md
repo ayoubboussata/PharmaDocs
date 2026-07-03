@@ -83,6 +83,7 @@ Voor het uploaden en extraheren van facturen draait ook de Python AI-service mee
 | `PUT` | `/api/documents/{id}/invoice` | 🔒 | Handmatige correctie van de factuurkop en lijnitems |
 | `POST` | `/api/knowledge/documents` | 🔒 | Procedure-PDF indexeren (chunken → embeddings → pgvector) |
 | `GET` | `/api/knowledge/sources` | 🔒 | Overzicht van geïndexeerde procedures |
+| `POST` | `/api/knowledge/ask` | 🔒 | Vraag stellen — antwoord uit de procedures met bronvermelding (RAG) |
 
 > Bij een upload legt de backend het document eerst als `Pending` vast en roept dan de Python-service aan. Lukt de extractie, dan wordt het `Processed` met de factuurgegevens; faalt ze (AI onbereikbaar, onleesbare PDF), dan wordt het `Failed` met een foutboodschap — een upload gaat dus nooit verloren.
 
@@ -115,7 +116,8 @@ PharmaDocs/
 - [x] **Front-end upload & overzicht** — drag & drop-upload met laadindicator, overzichtstabel met statussen (Verwerkt/Mislukt/In behandeling)
 - [x] **Detailweergave + handmatige correctie** — bewerkbare factuurkop en lijnitems, filter/zoeken op leverancier/status
 - [x] **RAG-indexering** — procedures chunken → Voyage-embeddings → opslaan in pgvector
-- [ ] RAG-chat met bronvermelding (retrieval + Claude)
+- [x] **RAG-chat met bronvermelding** — vraag → retrieval (pgvector) → Claude, antwoordt enkel uit de procedures
+- [ ] Chat-UI in de front-end
 
 ## Licentie
 
