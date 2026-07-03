@@ -50,7 +50,7 @@ De backend volgt een gelaagde architectuur — `Controllers → Services → Rep
 | Backend | ASP.NET Core Web API (.NET 8), Entity Framework Core, JWT-auth |
 | Database | PostgreSQL 16 + pgvector |
 | AI-service | Python + FastAPI |
-| AI | Anthropic Claude API + vector-embeddings |
+| AI | Anthropic Claude API (extractie + chat) + Voyage AI (embeddings) |
 | Front-end | React + Vite + TypeScript + Tailwind CSS |
 | Infra | Docker Compose |
 
@@ -81,6 +81,8 @@ Voor het uploaden en extraheren van facturen draait ook de Python AI-service mee
 | `GET` | `/api/documents` | 🔒 | Overzicht van verwerkte documenten |
 | `GET` | `/api/documents/{id}` | 🔒 | Detail met geëxtraheerde factuur en lijnitems |
 | `PUT` | `/api/documents/{id}/invoice` | 🔒 | Handmatige correctie van de factuurkop en lijnitems |
+| `POST` | `/api/knowledge/documents` | 🔒 | Procedure-PDF indexeren (chunken → embeddings → pgvector) |
+| `GET` | `/api/knowledge/sources` | 🔒 | Overzicht van geïndexeerde procedures |
 
 > Bij een upload legt de backend het document eerst als `Pending` vast en roept dan de Python-service aan. Lukt de extractie, dan wordt het `Processed` met de factuurgegevens; faalt ze (AI onbereikbaar, onleesbare PDF), dan wordt het `Failed` met een foutboodschap — een upload gaat dus nooit verloren.
 
@@ -112,7 +114,8 @@ PharmaDocs/
 - [x] **Koppeling `.NET ↔ Python`** — `POST /api/documents/upload`: backend orkestreert de AI-call en slaat het resultaat op in de DB
 - [x] **Front-end upload & overzicht** — drag & drop-upload met laadindicator, overzichtstabel met statussen (Verwerkt/Mislukt/In behandeling)
 - [x] **Detailweergave + handmatige correctie** — bewerkbare factuurkop en lijnitems, filter/zoeken op leverancier/status
-- [ ] RAG-kennisassistent (embeddings, chat met bronvermelding)
+- [x] **RAG-indexering** — procedures chunken → Voyage-embeddings → opslaan in pgvector
+- [ ] RAG-chat met bronvermelding (retrieval + Claude)
 
 ## Licentie
 
