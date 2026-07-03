@@ -1,0 +1,23 @@
+services:
+  db:
+    # pgvector image = PostgreSQL 16 + de pgvector-extensie al ingebakken.
+    # Zo werkt Fase 4 (RAG-embeddings) later zonder extra installatie.
+    image: pgvector/pgvector:pg16
+    container_name: pharmadocs-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pharmadocs
+      POSTGRES_PASSWORD: pharmadocs_dev
+      POSTGRES_DB: pharmadocs
+    ports:
+      - "5432:5432"
+    volumes:
+      - pharmadocs_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pharmadocs -d pharmadocs"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pharmadocs_pgdata:

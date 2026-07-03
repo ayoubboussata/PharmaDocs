@@ -1,0 +1,45 @@
+# ---- .NET ----
+bin/
+obj/
+out/
+*.user
+*.suo
+.vs/
+
+# EF Core
+*.db
+*.db-shm
+*.db-wal
+
+# ---- Secrets / config ----
+# Never commit real secrets. Local overrides & env files stay out of Git.
+appsettings.Development.local.json
+appsettings.Production.json
+*.env
+.env
+.env.*
+!.env.example
+
+# ---- Node / frontend (Fase 1 Dag 2+) ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# ---- Python AI-service (Fase 2) ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ---- IDE / OS ----
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---- Uploaded files (runtime) ----
+uploads/
