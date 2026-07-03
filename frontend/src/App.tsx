@@ -3,6 +3,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { DocumentsPage } from './pages/DocumentsPage'
 import { DocumentDetailPage } from './pages/DocumentDetailPage'
+import { AssistantPage } from './pages/AssistantPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 export default function App() {
@@ -23,6 +24,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DocumentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/assistant"
+        element={
+          <ProtectedRoute>
+            <AssistantPage />
           </ProtectedRoute>
         }
       />

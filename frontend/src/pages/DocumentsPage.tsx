@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import { useAuth } from '../auth/AuthContext'
+import { AppHeader } from '../components/AppHeader'
 import { DocumentUpload } from '../components/DocumentUpload'
 import type { DocumentDetail, DocumentStatus, DocumentSummary } from '../types'
 
@@ -37,7 +37,6 @@ function formatAmount(amount: number | null, currency: string | null) {
 }
 
 export function DocumentsPage() {
-  const { email, logout } = useAuth()
   const navigate = useNavigate()
   const [documents, setDocuments] = useState<DocumentSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,23 +92,7 @@ export function DocumentsPage() {
 
   return (
     <div className="min-h-full bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-white">PharmaDocs</h1>
-            <p className="text-xs text-slate-400">Documentbeheer</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400">{email}</span>
-            <button
-              onClick={logout}
-              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800"
-            >
-              Uitloggen
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         <h2 className="mb-4 text-xl font-semibold text-white">Nieuwe factuur</h2>
