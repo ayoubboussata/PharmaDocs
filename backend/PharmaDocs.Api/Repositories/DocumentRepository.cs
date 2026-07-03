@@ -28,4 +28,12 @@ public class DocumentRepository : IDocumentRepository
                 .ThenInclude(i => i!.LineItems)
             .FirstOrDefaultAsync(d => d.Id == id, ct);
     }
+
+    public async Task AddAsync(Document document, CancellationToken ct = default)
+    {
+        _db.Documents.Add(document);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public Task SaveChangesAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }

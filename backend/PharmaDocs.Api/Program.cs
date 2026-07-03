@@ -50,6 +50,22 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// --- AI-service (interne Python-microservice) ---
+var aiSettings = builder.Configuration.GetSection(AiServiceSettings.SectionName).Get<AiServiceSettings>()
+    ?? throw new InvalidOperationException("Sectie 'AiService' ontbreekt in de configuratie.");
+
+if (string.IsNullOrWhiteSpace(aiSettings.BaseUrl))
+    throw new InvalidOperationException("AiService:BaseUrl ontbreekt in de configuratie.");
+
+builder.Services.Configure<AiServiceSettings>(builder.Configuration.GetSection(AiServiceSettings.SectionName));
+
+// Typed HttpClient: de backend is de enige die de AI-service aanroept (orchestrator).
+builder.Services.AddHttpClient<IInvoiceExtractionClient, InvoiceExtractionClient>(client =>
+{
+    client.BaseAddress = new Uri(aiSettings.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
+});
+
 // --- Dependency injection: gelaagde structuur ---
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();

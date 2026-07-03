@@ -24,3 +24,24 @@ public class UnauthorizedException : AppException
     public override int StatusCode => StatusCodes.Status401Unauthorized;
     public UnauthorizedException(string message) : base(message) { }
 }
+
+/// <summary>Ongeldige invraag van de client (bv. ontbrekend bestand) → 400.</summary>
+public class BadRequestException : AppException
+{
+    public override int StatusCode => StatusCodes.Status400BadRequest;
+    public BadRequestException(string message) : base(message) { }
+}
+
+/// <summary>Niet-ondersteund bestandstype (enkel PDF) → 415.</summary>
+public class UnsupportedMediaTypeException : AppException
+{
+    public override int StatusCode => StatusCodes.Status415UnsupportedMediaType;
+    public UnsupportedMediaTypeException(string message) : base(message) { }
+}
+
+/// <summary>Payload te groot (bv. PDF > 10 MB) → 413.</summary>
+public class PayloadTooLargeException : AppException
+{
+    public override int StatusCode => StatusCodes.Status413PayloadTooLarge;
+    public PayloadTooLargeException(string message) : base(message) { }
+}

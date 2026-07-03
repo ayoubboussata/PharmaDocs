@@ -13,4 +13,10 @@ public interface IDocumentRepository
 
     /// <summary>Eén document met extractie + lijnitems, of null als het niet bestaat.</summary>
     Task<Document?> GetByIdAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Voegt een nieuw document toe en bewaart meteen.</summary>
+    Task AddAsync(Document document, CancellationToken ct = default);
+
+    /// <summary>Bewaart openstaande wijzigingen (bv. na het toevoegen van de extractie).</summary>
+    Task SaveChangesAsync(CancellationToken ct = default);
 }
