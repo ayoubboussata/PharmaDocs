@@ -5,3 +5,4 @@ pypdf==5.1.0
 python-multipart==0.0.20
 python-dotenv==1.0.1
 anthropic==0.116.0
+voyageai==0.3.6

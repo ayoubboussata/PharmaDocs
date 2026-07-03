@@ -14,10 +14,14 @@ public class AppDbContext : DbContext
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<ExtractedInvoice> ExtractedInvoices => Set<ExtractedInvoice>();
     public DbSet<InvoiceLineItem> InvoiceLineItems => Set<InvoiceLineItem>();
+    public DbSet<KnowledgeChunk> KnowledgeChunks => Set<KnowledgeChunk>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // pgvector-extensie: nodig voor het vector-kolomtype (RAG, Fase 4).
+        modelBuilder.HasPostgresExtension("vector");
 
         modelBuilder.Entity<User>(entity =>
         {
@@ -72,6 +76,15 @@ public class AppDbContext : DbContext
             entity.Property(l => l.Quantity).HasPrecision(18, 3);
             entity.Property(l => l.UnitPrice).HasPrecision(18, 2);
             entity.Property(l => l.LineTotal).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<KnowledgeChunk>(entity =>
+        {
+            entity.Property(c => c.SourceName).IsRequired().HasMaxLength(500);
+            entity.Property(c => c.Content).IsRequired();
+
+            // Snel de stukken van één bron ophalen/verwijderen bij herindexeren.
+            entity.HasIndex(c => c.SourceName);
         });
     }
 }

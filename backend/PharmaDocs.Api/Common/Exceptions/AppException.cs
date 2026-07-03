@@ -45,3 +45,10 @@ public class PayloadTooLargeException : AppException
     public override int StatusCode => StatusCodes.Status413PayloadTooLarge;
     public PayloadTooLargeException(string message) : base(message) { }
 }
+
+/// <summary>Een afhankelijke dienst (bv. de AI-service) is niet beschikbaar → 503.</summary>
+public class ServiceUnavailableException : AppException
+{
+    public override int StatusCode => StatusCodes.Status503ServiceUnavailable;
+    public ServiceUnavailableException(string message) : base(message) { }
+}
