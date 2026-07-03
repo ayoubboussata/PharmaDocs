@@ -69,14 +69,19 @@ dotnet run --launch-profile http
 
 De API draait op `http://localhost:5035`, met Swagger op `http://localhost:5035/swagger`.
 
+Voor het uploaden en extraheren van facturen draait ook de Python AI-service mee (zie [`ai-service/`](ai-service/)); de backend roept die intern aan op `http://localhost:8000`.
+
 ### Endpoints (huidige stand)
 
 | Methode | Route | Auth | Omschrijving |
 | --- | --- | --- | --- |
 | `POST` | `/api/auth/register` | — | Account aanmaken, geeft een JWT terug |
 | `POST` | `/api/auth/login` | — | Inloggen, geeft een JWT terug |
+| `POST` | `/api/documents/upload` | 🔒 | Upload een factuur-PDF → interne AI-extractie → opgeslagen document |
 | `GET` | `/api/documents` | 🔒 | Overzicht van verwerkte documenten |
 | `GET` | `/api/documents/{id}` | 🔒 | Detail met geëxtraheerde factuur en lijnitems |
+
+> Bij een upload legt de backend het document eerst als `Pending` vast en roept dan de Python-service aan. Lukt de extractie, dan wordt het `Processed` met de factuurgegevens; faalt ze (AI onbereikbaar, onleesbare PDF), dan wordt het `Failed` met een foutboodschap — een upload gaat dus nooit verloren.
 
 ## Projectstructuur
 
@@ -103,7 +108,7 @@ PharmaDocs/
 - [x] **Authenticatie (JWT)** + front-end skelet — register/login, BCrypt, beveiligde endpoints, React-loginscherm
 - [x] **Python AI-service** — FastAPI met PDF-tekstextractie (`POST /extract`)
 - [x] **AI-factuurextractie** — `POST /extract-invoice`: PDF → Claude → gestructureerde JSON (strikte tool-use)
-- [ ] Koppeling `.NET ↔ Python` (`POST /api/documents/upload`) + opslag in DB
+- [x] **Koppeling `.NET ↔ Python`** — `POST /api/documents/upload`: backend orkestreert de AI-call en slaat het resultaat op in de DB
 - [ ] Front-end documentbeheer (upload, overzicht, detail)
 - [ ] RAG-kennisassistent (embeddings, chat met bronvermelding)
 
