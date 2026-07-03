@@ -117,7 +117,7 @@ PharmaDocs/
 - [x] **Detailweergave + handmatige correctie** — bewerkbare factuurkop en lijnitems, filter/zoeken op leverancier/status
 - [x] **RAG-indexering** — procedures chunken → Voyage-embeddings → opslaan in pgvector
 - [x] **RAG-chat met bronvermelding** — vraag → retrieval (pgvector) → Claude, antwoordt enkel uit de procedures
-- [ ] Chat-UI in de front-end
+- [x] **Kennisassistent-UI** — chatscherm + procedurebeheer (upload + geïndexeerde bronnen)
 
 ## Licentie
 
