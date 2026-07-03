@@ -1,0 +1,64 @@
+using Microsoft.EntityFrameworkCore;
+using PharmaDocs.Api.Models;
+
+namespace PharmaDocs.Api.Data;
+
+/// <summary>
+/// EF Core DbContext — de brug tussen de C#-modellen en PostgreSQL.
+/// </summary>
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    public DbSet<Document> Documents => Set<Document>();
+    public DbSet<ExtractedInvoice> ExtractedInvoices => Set<ExtractedInvoice>();
+    public DbSet<InvoiceLineItem> InvoiceLineItems => Set<InvoiceLineItem>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Document>(entity =>
+        {
+            entity.Property(d => d.FileName).IsRequired().HasMaxLength(500);
+            entity.Property(d => d.ContentType).IsRequired().HasMaxLength(100);
+
+            // Enum als leesbare string in de databank i.p.v. een int.
+            entity.Property(d => d.Status)
+                  .HasConversion<string>()
+                  .HasMaxLength(20);
+
+            // Eén Document ── één ExtractedInvoice.
+            // Verwijder je een Document, dan verdwijnt de bijhorende extractie mee (cascade).
+            entity.HasOne(d => d.ExtractedInvoice)
+                  .WithOne(i => i.Document)
+                  .HasForeignKey<ExtractedInvoice>(i => i.DocumentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExtractedInvoice>(entity =>
+        {
+            entity.Property(i => i.SupplierName).IsRequired().HasMaxLength(300);
+            entity.Property(i => i.InvoiceNumber).IsRequired().HasMaxLength(100);
+            entity.Property(i => i.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(i => i.TotalAmount).HasPrecision(18, 2);
+
+            // Uniek: precies één extractie per document.
+            entity.HasIndex(i => i.DocumentId).IsUnique();
+
+            // Eén factuur ── veel lijnitems (cascade delete).
+            entity.HasMany(i => i.LineItems)
+                  .WithOne(l => l.ExtractedInvoice)
+                  .HasForeignKey(l => l.ExtractedInvoiceId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InvoiceLineItem>(entity =>
+        {
+            entity.Property(l => l.Description).IsRequired().HasMaxLength(500);
+            entity.Property(l => l.Quantity).HasPrecision(18, 3);
+            entity.Property(l => l.UnitPrice).HasPrecision(18, 2);
+            entity.Property(l => l.LineTotal).HasPrecision(18, 2);
+        });
+    }
+}
