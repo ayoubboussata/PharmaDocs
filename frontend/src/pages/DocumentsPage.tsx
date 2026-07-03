@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { DocumentUpload } from '../components/DocumentUpload'
@@ -37,10 +38,13 @@ function formatAmount(amount: number | null, currency: string | null) {
 
 export function DocumentsPage() {
   const { email, logout } = useAuth()
+  const navigate = useNavigate()
   const [documents, setDocuments] = useState<DocumentSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<{ type: 'ok' | 'warn'; text: string } | null>(null)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | DocumentStatus>('all')
 
   const loadDocuments = useCallback(async () => {
     setError(null)
@@ -73,6 +77,19 @@ export function DocumentsPage() {
     }
     void loadDocuments()
   }
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return documents.filter((doc) => {
+      if (statusFilter !== 'all' && doc.status !== statusFilter) return false
+      if (!q) return true
+      return (
+        doc.fileName.toLowerCase().includes(q) ||
+        (doc.supplierName?.toLowerCase().includes(q) ?? false) ||
+        (doc.invoiceNumber?.toLowerCase().includes(q) ?? false)
+      )
+    })
+  }, [documents, search, statusFilter])
 
   return (
     <div className="min-h-full bg-slate-950 text-slate-100">
@@ -110,14 +127,32 @@ export function DocumentsPage() {
           </p>
         )}
 
-        <div className="mb-4 mt-10 flex items-center justify-between">
+        <div className="mb-4 mt-10 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-white">Documenten</h2>
-          <button
-            onClick={() => void loadDocuments()}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800"
-          >
-            Vernieuwen
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Zoek op leverancier, bestand of nr."
+              className="w-64 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | DocumentStatus)}
+              className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 outline-none focus:border-emerald-500"
+            >
+              <option value="all">Alle statussen</option>
+              <option value="Processed">Verwerkt</option>
+              <option value="Failed">Mislukt</option>
+              <option value="Pending">In behandeling</option>
+            </select>
+            <button
+              onClick={() => void loadDocuments()}
+              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800"
+            >
+              Vernieuwen
+            </button>
+          </div>
         </div>
 
         {loading && <p className="text-slate-400">Laden…</p>}
@@ -132,7 +167,13 @@ export function DocumentsPage() {
           </div>
         )}
 
-        {!loading && !error && documents.length > 0 && (
+        {!loading && !error && documents.length > 0 && filtered.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
+            <p className="text-slate-400">Geen documenten voor deze filter.</p>
+          </div>
+        )}
+
+        {!loading && !error && filtered.length > 0 && (
           <div className="overflow-x-auto rounded-2xl border border-slate-800">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-900 text-slate-400">
@@ -146,8 +187,12 @@ export function DocumentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800 bg-slate-900/40">
-                {documents.map((doc) => (
-                  <tr key={doc.id} className="text-slate-200">
+                {filtered.map((doc) => (
+                  <tr
+                    key={doc.id}
+                    onClick={() => navigate(`/documents/${doc.id}`)}
+                    className="cursor-pointer text-slate-200 transition hover:bg-slate-800/60"
+                  >
                     <td className="px-4 py-3">{doc.fileName}</td>
                     <td className="px-4 py-3">{doc.supplierName ?? '—'}</td>
                     <td className="px-4 py-3">{doc.invoiceNumber ?? '—'}</td>

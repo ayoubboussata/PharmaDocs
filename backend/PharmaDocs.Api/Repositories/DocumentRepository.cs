@@ -29,6 +29,15 @@ public class DocumentRepository : IDocumentRepository
             .FirstOrDefaultAsync(d => d.Id == id, ct);
     }
 
+    public async Task<Document?> GetTrackedByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        // Bewust géén AsNoTracking: de entiteit wordt gewijzigd en bewaard.
+        return await _db.Documents
+            .Include(d => d.ExtractedInvoice)
+                .ThenInclude(i => i!.LineItems)
+            .FirstOrDefaultAsync(d => d.Id == id, ct);
+    }
+
     public async Task AddAsync(Document document, CancellationToken ct = default)
     {
         _db.Documents.Add(document);

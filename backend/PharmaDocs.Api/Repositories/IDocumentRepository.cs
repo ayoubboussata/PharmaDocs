@@ -14,6 +14,12 @@ public interface IDocumentRepository
     /// <summary>Eén document met extractie + lijnitems, of null als het niet bestaat.</summary>
     Task<Document?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
+    /// <summary>
+    /// Zoals <see cref="GetByIdAsync"/>, maar <b>getrackt</b> zodat wijzigingen
+    /// (handmatige correctie) bewaard kunnen worden.
+    /// </summary>
+    Task<Document?> GetTrackedByIdAsync(Guid id, CancellationToken ct = default);
+
     /// <summary>Voegt een nieuw document toe en bewaart meteen.</summary>
     Task AddAsync(Document document, CancellationToken ct = default);
 
