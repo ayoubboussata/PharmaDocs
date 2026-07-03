@@ -7,7 +7,7 @@ Interne Python-microservice (FastAPI) voor de AI-taken. Wordt **enkel intern** d
 | Fase | Endpoint | Taak |
 | --- | --- | --- |
 | 2 (Dag 3) | `POST /extract` | PDF ontvangen → ruwe tekst extraheren (pdfplumber) |
-| 2 (Dag 4) | `POST /extract` | tekst → Claude → gestructureerde JSON *(volgt)* |
+| 2 (Dag 4) | `POST /extract-invoice` | PDF → tekst → Claude → gestructureerde JSON (strikte tool-use) |
 | 4 | `POST /chat` e.a. | RAG: embeddings + chat met bronvermelding *(volgt)* |
 
 ## Lokaal draaien
@@ -26,10 +26,11 @@ Interactieve docs: `http://localhost:8000/docs`.
 
 | Methode | Route | Omschrijving |
 | --- | --- | --- |
-| `GET` | `/health` | Liveness-check |
-| `POST` | `/extract` | Multipart-upload van een PDF → `{ fileName, pageCount, characterCount, text }` |
+| `GET` | `/health` | Liveness-check (+ `aiEnabled`, `model`) |
+| `POST` | `/extract` | PDF → `{ fileName, pageCount, characterCount, text }` |
+| `POST` | `/extract-invoice` | PDF → `{ fileName, pageCount, invoice: { supplierName, invoiceNumber, invoiceDate, totalAmount, currency, lineItems[] } }` |
 
-Foutcodes: `415` (geen PDF), `413` (> 10 MB), `422` (onleesbaar / geen tekstlaag), `400` (leeg).
+Foutcodes: `415` (geen PDF), `413` (> 10 MB), `422` (onleesbaar / geen tekstlaag), `400` (leeg), `503` (AI niet beschikbaar / upstream-fout).
 
 ## Configuratie
 
