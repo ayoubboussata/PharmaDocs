@@ -90,6 +90,9 @@ public class DocumentService : IDocumentService
         invoice.SupplierName = request.SupplierName;
         invoice.InvoiceNumber = request.InvoiceNumber;
         invoice.InvoiceDate = request.InvoiceDate;
+        invoice.SubtotalAmount = request.SubtotalAmount;
+        invoice.VatRate = request.VatRate;
+        invoice.VatAmount = request.VatAmount;
         invoice.TotalAmount = request.TotalAmount;
         invoice.Currency = string.IsNullOrWhiteSpace(request.Currency) ? "EUR" : request.Currency;
 
@@ -135,6 +138,9 @@ public class DocumentService : IDocumentService
         SupplierName = extraction.SupplierName,
         InvoiceNumber = extraction.InvoiceNumber,
         InvoiceDate = extraction.InvoiceDate,
+        SubtotalAmount = extraction.SubtotalAmount,
+        VatRate = extraction.VatRate,
+        VatAmount = extraction.VatAmount,
         TotalAmount = extraction.TotalAmount,
         Currency = extraction.Currency,
         CreatedAt = DateTime.UtcNow,

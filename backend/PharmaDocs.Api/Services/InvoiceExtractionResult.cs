@@ -9,6 +9,9 @@ public sealed record InvoiceExtractionResult(
     string SupplierName,
     string InvoiceNumber,
     DateOnly? InvoiceDate,
+    decimal SubtotalAmount,
+    decimal? VatRate,
+    decimal VatAmount,
     decimal TotalAmount,
     string Currency,
     IReadOnlyList<InvoiceLineResult> LineItems);

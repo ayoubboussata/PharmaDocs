@@ -20,7 +20,16 @@ public class ExtractedInvoice
     /// <summary>Factuurdatum (enkel datum, geen tijd).</summary>
     public DateOnly? InvoiceDate { get; set; }
 
-    /// <summary>Totaalbedrag van de factuur.</summary>
+    /// <summary>Bedrag exclusief btw (subtotaal).</summary>
+    public decimal SubtotalAmount { get; set; }
+
+    /// <summary>Btw-tarief in procent (bv. 6 of 21), of null bij meerdere/geen tarief.</summary>
+    public decimal? VatRate { get; set; }
+
+    /// <summary>Btw-bedrag.</summary>
+    public decimal VatAmount { get; set; }
+
+    /// <summary>Totaalbedrag van de factuur, inclusief btw.</summary>
     public decimal TotalAmount { get; set; }
 
     /// <summary>Munteenheid, standaard EUR.</summary>

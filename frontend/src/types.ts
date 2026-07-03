@@ -31,6 +31,9 @@ export interface ExtractedInvoice {
   supplierName: string
   invoiceNumber: string
   invoiceDate: string | null
+  subtotalAmount: number
+  vatRate: number | null
+  vatAmount: number
   totalAmount: number
   currency: string
   lineItems: InvoiceLineItem[]
