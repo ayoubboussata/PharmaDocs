@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaDocs.Api.DTOs.Documents;
 using PharmaDocs.Api.Services;
@@ -5,9 +6,10 @@ using PharmaDocs.Api.Services;
 namespace PharmaDocs.Api.Controllers;
 
 /// <summary>
-/// Publieke poort voor documenten. Blijft dun: valideert de route en delegeert naar de service.
-/// (Auth [Authorize] volgt in Dag 2; upload/extractie in Fase 2–5.)
+/// Poort voor documenten. Blijft dun: valideert de route en delegeert naar de service.
+/// Vereist authenticatie. (Upload/extractie volgt in Fase 2–5.)
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class DocumentsController : ControllerBase

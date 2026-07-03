@@ -71,10 +71,12 @@ De API draait op `http://localhost:5035`, met Swagger op `http://localhost:5035/
 
 ### Endpoints (huidige stand)
 
-| Methode | Route | Omschrijving |
-| --- | --- | --- |
-| `GET` | `/api/documents` | Overzicht van verwerkte documenten |
-| `GET` | `/api/documents/{id}` | Detail met geëxtraheerde factuur en lijnitems |
+| Methode | Route | Auth | Omschrijving |
+| --- | --- | --- | --- |
+| `POST` | `/api/auth/register` | — | Account aanmaken, geeft een JWT terug |
+| `POST` | `/api/auth/login` | — | Inloggen, geeft een JWT terug |
+| `GET` | `/api/documents` | 🔒 | Overzicht van verwerkte documenten |
+| `GET` | `/api/documents/{id}` | 🔒 | Detail met geëxtraheerde factuur en lijnitems |
 
 ## Projectstructuur
 
@@ -98,7 +100,7 @@ PharmaDocs/
 ## Roadmap
 
 - [x] **Fundament** — backend-skelet, datamodel, EF Core-migratie, gelaagde architectuur
-- [ ] Authenticatie (JWT) + front-end skelet
+- [x] **Authenticatie (JWT)** + front-end skelet — register/login, BCrypt, beveiligde endpoints, React-loginscherm
 - [ ] Python AI-service + factuurextractie (Claude API)
 - [ ] Front-end documentbeheer (upload, overzicht, detail)
 - [ ] RAG-kennisassistent (embeddings, chat met bronvermelding)
