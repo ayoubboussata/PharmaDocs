@@ -49,3 +49,21 @@ export interface DocumentDetail {
   errorMessage: string | null
   extractedInvoice: ExtractedInvoice | null
 }
+
+// --- Kennisassistent (RAG) ---
+
+export interface KnowledgeSource {
+  sourceName: string
+  chunkCount: number
+  indexedAt: string
+}
+
+export interface KnowledgeIngestResponse {
+  sourceName: string
+  chunkCount: number
+}
+
+export interface AskResponse {
+  answer: string
+  sources: string[]
+}
