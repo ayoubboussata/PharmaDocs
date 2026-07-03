@@ -80,6 +80,7 @@ Voor het uploaden en extraheren van facturen draait ook de Python AI-service mee
 | `POST` | `/api/documents/upload` | 🔒 | Upload een factuur-PDF → interne AI-extractie → opgeslagen document |
 | `GET` | `/api/documents` | 🔒 | Overzicht van verwerkte documenten |
 | `GET` | `/api/documents/{id}` | 🔒 | Detail met geëxtraheerde factuur en lijnitems |
+| `PUT` | `/api/documents/{id}/invoice` | 🔒 | Handmatige correctie van de factuurkop en lijnitems |
 
 > Bij een upload legt de backend het document eerst als `Pending` vast en roept dan de Python-service aan. Lukt de extractie, dan wordt het `Processed` met de factuurgegevens; faalt ze (AI onbereikbaar, onleesbare PDF), dan wordt het `Failed` met een foutboodschap — een upload gaat dus nooit verloren.
 
@@ -110,7 +111,7 @@ PharmaDocs/
 - [x] **AI-factuurextractie** — `POST /extract-invoice`: PDF → Claude → gestructureerde JSON (strikte tool-use)
 - [x] **Koppeling `.NET ↔ Python`** — `POST /api/documents/upload`: backend orkestreert de AI-call en slaat het resultaat op in de DB
 - [x] **Front-end upload & overzicht** — drag & drop-upload met laadindicator, overzichtstabel met statussen (Verwerkt/Mislukt/In behandeling)
-- [ ] Front-end detailweergave + handmatige correctie
+- [x] **Detailweergave + handmatige correctie** — bewerkbare factuurkop en lijnitems, filter/zoeken op leverancier/status
 - [ ] RAG-kennisassistent (embeddings, chat met bronvermelding)
 
 ## Licentie
