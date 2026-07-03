@@ -36,4 +36,21 @@ public class DocumentsController : ControllerBase
         var document = await _service.GetByIdAsync(id, ct);
         return document is null ? NotFound() : Ok(document);
     }
+
+    /// <summary>
+    /// Uploadt een factuur-PDF. De backend roept intern de Python AI-service aan,
+    /// bewaart het geëxtraheerde resultaat en geeft het document terug.
+    /// Een mislukte extractie levert een document met status <c>Failed</c> (geen fout).
+    /// </summary>
+    [HttpPost("upload")]
+    [ProducesResponseType(typeof(DocumentDetailDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
+    [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<ActionResult<DocumentDetailDto>> Upload(IFormFile file, CancellationToken ct)
+    {
+        var document = await _service.UploadAndExtractAsync(file, ct);
+        return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
+    }
 }
