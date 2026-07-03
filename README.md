@@ -21,7 +21,7 @@ Het project is opgebouwd rond een duidelijke scheiding van verantwoordelijkheden
 ## Kernfunctionaliteit
 
 **1 · Slimme documentverwerking**
-Upload een factuur (PDF) → de tekst wordt geëxtraheerd → omgezet naar gestructureerde JSON (leverancier, factuurnummer, datum, totaalbedrag, lijnitems) → opgeslagen in de databank → getoond in een doorzoekbare tabel met detailweergave.
+Upload een factuur (PDF) → de tekst wordt geëxtraheerd → omgezet naar gestructureerde JSON (leverancier, factuurnummer, datum, subtotaal, btw-tarief en btw-bedrag, totaalbedrag, lijnitems) → opgeslagen in de databank → getoond in een doorzoekbare tabel met detailweergave.
 
 **2 · Interne kennisassistent (RAG)**
 Procedure-documenten worden geïndexeerd als vector-embeddings. Een chat-endpoint haalt de meest relevante fragmenten op en genereert een antwoord met **bronvermelding**, en geeft expliciet aan wanneer het antwoord niet in de documenten staat — cruciaal tegen hallucinaties in een medische context.
