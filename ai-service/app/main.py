@@ -16,12 +16,13 @@ import pdfplumber
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from .config import get_settings
+from .embeddings import EmbeddingError, chunk_text, embed_texts
 from .extraction import ExtractionError, extract_invoice
 
 app = FastAPI(
     title="PharmaDocs AI-service",
-    version="0.2.0",
-    description="Interne AI-microservice: PDF-extractie en (later) RAG-chat.",
+    version="0.3.0",
+    description="Interne AI-microservice: PDF-extractie, factuurextractie en RAG-embeddings.",
 )
 
 MAX_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -29,9 +30,16 @@ MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 
 @app.get("/health")
 def health() -> dict[str, object]:
-    """Liveness-check + of AI-extractie beschikbaar is (API-sleutel aanwezig)."""
+    """Liveness-check + of AI-extractie en embeddings beschikbaar zijn (sleutels aanwezig)."""
     settings = get_settings()
-    return {"status": "ok", "aiEnabled": settings.ai_enabled, "model": settings.anthropic_model}
+    return {
+        "status": "ok",
+        "aiEnabled": settings.ai_enabled,
+        "model": settings.anthropic_model,
+        "embeddingsEnabled": settings.embeddings_enabled,
+        "embeddingModel": settings.voyage_model,
+        "embeddingDimension": settings.embedding_dimension,
+    }
 
 
 def _extract_text(pdf_bytes: bytes) -> tuple[str, int]:
@@ -98,4 +106,28 @@ async def extract_invoice_endpoint(file: UploadFile = File(...)) -> dict[str, ob
         "fileName": file.filename,
         "pageCount": page_count,
         "invoice": invoice,
+    }
+
+
+@app.post("/embed-document")
+async def embed_document(file: UploadFile = File(...)) -> dict[str, object]:
+    """
+    PDF -> tekst -> chunks -> embeddings (Voyage). Geeft de stukken met hun
+    vectoren terug; de .NET-backend slaat ze op in pgvector (RAG-indexering).
+    """
+    text, page_count = await _read_pdf(file)
+    chunks = chunk_text(text)
+
+    try:
+        vectors = embed_texts(chunks, input_type="document")
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return {
+        "fileName": file.filename,
+        "pageCount": page_count,
+        "chunks": [
+            {"index": i, "content": content, "embedding": vector}
+            for i, (content, vector) in enumerate(zip(chunks, vectors))
+        ],
     }

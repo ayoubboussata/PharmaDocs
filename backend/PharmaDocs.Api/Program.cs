@@ -16,7 +16,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection ontbreekt.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, o => o.UseVector())); // pgvector-typemapping (RAG)
 
 // --- JWT-instellingen (Key komt uit user-secrets / env, niet uit Git) ---
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
@@ -59,8 +59,13 @@ if (string.IsNullOrWhiteSpace(aiSettings.BaseUrl))
 
 builder.Services.Configure<AiServiceSettings>(builder.Configuration.GetSection(AiServiceSettings.SectionName));
 
-// Typed HttpClient: de backend is de enige die de AI-service aanroept (orchestrator).
+// Typed HttpClients: de backend is de enige die de AI-service aanroept (orchestrator).
 builder.Services.AddHttpClient<IInvoiceExtractionClient, InvoiceExtractionClient>(client =>
+{
+    client.BaseAddress = new Uri(aiSettings.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
+});
+builder.Services.AddHttpClient<IEmbeddingClient, EmbeddingClient>(client =>
 {
     client.BaseAddress = new Uri(aiSettings.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
@@ -72,6 +77,8 @@ builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddScoped<IKnowledgeRepository, KnowledgeRepository>();
+builder.Services.AddScoped<IKnowledgeService, KnowledgeService>();
 
 // --- Web API ---
 builder.Services.AddControllers();
