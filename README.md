@@ -101,7 +101,8 @@ PharmaDocs/
 
 - [x] **Fundament** — backend-skelet, datamodel, EF Core-migratie, gelaagde architectuur
 - [x] **Authenticatie (JWT)** + front-end skelet — register/login, BCrypt, beveiligde endpoints, React-loginscherm
-- [ ] Python AI-service + factuurextractie (Claude API)
+- [x] **Python AI-service** — FastAPI met PDF-tekstextractie (`POST /extract`)
+- [ ] Factuurextractie naar JSON (Claude API) + koppeling met de .NET-backend
 - [ ] Front-end documentbeheer (upload, overzicht, detail)
 - [ ] RAG-kennisassistent (embeddings, chat met bronvermelding)
 
