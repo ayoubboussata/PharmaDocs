@@ -53,4 +53,19 @@ public class DocumentsController : ControllerBase
         var document = await _service.UploadAndExtractAsync(file, ct);
         return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
     }
+
+    /// <summary>
+    /// Handmatige correctie van de geëxtraheerde factuur (kop + lijnitems).
+    /// De meegestuurde lijnitems vervangen de bestaande volledig.
+    /// </summary>
+    [HttpPut("{id:guid}/invoice")]
+    [ProducesResponseType(typeof(DocumentDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DocumentDetailDto>> UpdateInvoice(
+        Guid id, UpdateInvoiceRequest request, CancellationToken ct)
+    {
+        var updated = await _service.UpdateInvoiceAsync(id, request, ct);
+        return updated is null ? NotFound() : Ok(updated);
+    }
 }

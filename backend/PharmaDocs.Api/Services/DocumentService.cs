@@ -77,6 +77,41 @@ public class DocumentService : IDocumentService
         return document.ToDetailDto();
     }
 
+    public async Task<DocumentDetailDto?> UpdateInvoiceAsync(
+        Guid id, UpdateInvoiceRequest request, CancellationToken ct = default)
+    {
+        var document = await _repository.GetTrackedByIdAsync(id, ct);
+        if (document is null)
+            return null;
+        if (document.ExtractedInvoice is null)
+            throw new BadRequestException("Dit document heeft geen extractie om te corrigeren.");
+
+        var invoice = document.ExtractedInvoice;
+        invoice.SupplierName = request.SupplierName;
+        invoice.InvoiceNumber = request.InvoiceNumber;
+        invoice.InvoiceDate = request.InvoiceDate;
+        invoice.TotalAmount = request.TotalAmount;
+        invoice.Currency = string.IsNullOrWhiteSpace(request.Currency) ? "EUR" : request.Currency;
+
+        // Lijnitems volledig vervangen: eenvoudig en robuust bij toevoegen/verwijderen.
+        // De oude (nu wees geworden) lijnen worden door EF verwijderd; de nieuwe
+        // krijgen een gegenereerde sleutel → INSERT (geen Id zelf zetten).
+        invoice.LineItems.Clear();
+        foreach (var line in request.LineItems)
+        {
+            invoice.LineItems.Add(new InvoiceLineItem
+            {
+                Description = line.Description,
+                Quantity = line.Quantity,
+                UnitPrice = line.UnitPrice,
+                LineTotal = line.LineTotal,
+            });
+        }
+
+        await _repository.SaveChangesAsync(ct);
+        return document.ToDetailDto();
+    }
+
     private static void ValidateUpload(IFormFile file)
     {
         if (file is null || file.Length == 0)

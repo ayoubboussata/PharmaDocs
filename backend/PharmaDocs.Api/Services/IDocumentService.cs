@@ -18,4 +18,10 @@ public interface IDocumentService
     /// <c>Failed</c> vastgelegd (de upload gaat nooit verloren).
     /// </summary>
     Task<DocumentDetailDto> UploadAndExtractAsync(IFormFile file, CancellationToken ct = default);
+
+    /// <summary>
+    /// Handmatige correctie van de geëxtraheerde factuur. Geeft het bijgewerkte
+    /// document terug, of <c>null</c> als het document niet bestaat.
+    /// </summary>
+    Task<DocumentDetailDto?> UpdateInvoiceAsync(Guid id, UpdateInvoiceRequest request, CancellationToken ct = default);
 }
