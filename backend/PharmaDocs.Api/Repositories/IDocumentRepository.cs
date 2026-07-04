@@ -8,17 +8,20 @@ namespace PharmaDocs.Api.Repositories;
 /// </summary>
 public interface IDocumentRepository
 {
-    /// <summary>Alle documenten, nieuwste eerst, met hun (eventuele) extractie.</summary>
-    Task<IReadOnlyList<Document>> GetAllAsync(CancellationToken ct = default);
+    /// <summary>Alle documenten <b>van deze gebruiker</b>, nieuwste eerst, met hun extractie.</summary>
+    Task<IReadOnlyList<Document>> GetAllAsync(Guid userId, CancellationToken ct = default);
 
-    /// <summary>Eén document met extractie + lijnitems, of null als het niet bestaat.</summary>
-    Task<Document?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    /// <summary>
+    /// Eén document van deze gebruiker met extractie + lijnitems, of null als het
+    /// niet bestaat <b>of niet van deze gebruiker is</b> (eigenaarschapscheck).
+    /// </summary>
+    Task<Document?> GetByIdAsync(Guid id, Guid userId, CancellationToken ct = default);
 
     /// <summary>
     /// Zoals <see cref="GetByIdAsync"/>, maar <b>getrackt</b> zodat wijzigingen
-    /// (handmatige correctie) bewaard kunnen worden.
+    /// (handmatige correctie) bewaard kunnen worden. Ook hier de eigenaarschapscheck.
     /// </summary>
-    Task<Document?> GetTrackedByIdAsync(Guid id, CancellationToken ct = default);
+    Task<Document?> GetTrackedByIdAsync(Guid id, Guid userId, CancellationToken ct = default);
 
     /// <summary>Voegt een nieuw document toe en bewaart meteen.</summary>
     Task AddAsync(Document document, CancellationToken ct = default);
