@@ -1,0 +1,22 @@
+# API_URL en API_HOST worden bij het opstarten door envsubst ingevuld
+# (de interne URL van de .NET-backend-container). $host/$scheme blijven nginx-variabelen.
+server {
+    listen 80;
+    server_name _;
+
+    # Statische SPA-bestanden; onbekende paden vallen terug op index.html (client-side routing).
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # /api → de backend. Zo blijft de front-end same-origin praten (geen CORS).
+    location /api/ {
+        proxy_pass ${API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host ${API_HOST};
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_ssl_server_name on;
+    }
+}

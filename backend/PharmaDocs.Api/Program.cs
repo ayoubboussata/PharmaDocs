@@ -123,9 +123,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    // Enkel lokaal: in productie termineert de Container Apps-ingress TLS en spreekt
+    // ze de container over HTTP aan — een redirect zou die interne call breken.
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
