@@ -64,6 +64,40 @@ De .NET-config leest deze omgevingsvariabelen automatisch (`__` = geneste sectie
   az postgres flexible-server start -g rg-pharmadocs -n <pg-naam>
   ```
 
+## De database afschermen (productie)
+
+Standaard maakt het script de PostgreSQL met `--public-access 0.0.0.0`: een publiek endpoint dat enkel Azure-diensten toelaat, afgeschermd door het wachtwoord. Voldoende voor een demo, maar niet ideaal.
+
+**De firewall beperken tot enkel de Container Apps-omgeving werkt niet betrouwbaar op het Consumption-plan** — dat heeft geen stabiel, kenbaar uitgaand IP (het `staticIp` van de omgeving is het *inkomende* IP; egress gebeurt via een wisselende set IP's). Empirisch getest: de DB firewallen op het `staticIp` verbrak de connectie.
+
+**De juiste productie-oplossing is private networking**: de DB krijgt géén publiek endpoint en is enkel bereikbaar binnen een VNet.
+
+```bash
+# 1. VNet met een subnet voor de apps (min. /23) en een gedelegeerd subnet voor de DB
+az network vnet create -g rg-pharmadocs -n vnet-pharmadocs \
+  --address-prefixes 10.20.0.0/16 \
+  --subnet-name snet-apps --subnet-prefixes 10.20.0.0/23
+az network vnet subnet create -g rg-pharmadocs --vnet-name vnet-pharmadocs -n snet-db \
+  --address-prefixes 10.20.2.0/24 \
+  --delegations Microsoft.DBforPostgreSQL/flexibleServers
+
+# 2. PostgreSQL met PRIVATE access (geen publiek endpoint) + eigen private DNS-zone
+az postgres flexible-server create -g rg-pharmadocs -n <pg-naam> -l <regio> \
+  --admin-user pharmadocs --admin-password <sterk-wachtwoord> \
+  --tier Burstable --sku-name Standard_B1ms --storage-size 32 --version 16 \
+  --vnet vnet-pharmadocs --subnet snet-db \
+  --private-dns-zone pharmadocs.private.postgres.database.azure.com --yes
+
+# 3. Container Apps-omgeving VNet-geïntegreerd (egress via het apps-subnet)
+SNET=$(az network vnet subnet show -g rg-pharmadocs --vnet-name vnet-pharmadocs -n snet-apps --query id -o tsv)
+az containerapp env create -g rg-pharmadocs -n cae-pharmadocs -l <regio> \
+  --infrastructure-subnet-resource-id "$SNET"
+```
+
+De web-app houdt gewoon publieke ingress; enkel het egress-verkeer (backend → DB) loopt privé binnen de VNet. De connectiestring blijft dezelfde host (`<pg-naam>.postgres.database.azure.com`) — die resolvet nu binnen de VNet naar het private adres. `Ssl Mode=VerifyFull` blijft van toepassing.
+
+> Op een *Azure for Students*-abonnement kan VNet-geïntegreerde Container Apps tegen regio-/feature-limieten aanlopen; test dit op een regulier abonnement.
+
 ## Opruimen
 
 ```bash
