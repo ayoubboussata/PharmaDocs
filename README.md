@@ -12,34 +12,53 @@
 
 </div>
 
+<p align="center">
+  <img src="docs/screenshots/facturen.png" alt="Facturenoverzicht" width="880">
+</p>
+
 ## Overzicht
 
-PharmaDocs automatiseert het administratieve papierwerk van een apotheekgroep. Facturen en bestelbonnen worden geüpload en automatisch omgezet naar gestructureerde data, en een interne chatbot beantwoordt procedurevragen op basis van de eigen documenten — met bronvermelding.
+PharmaDocs automatiseert het administratieve papierwerk van een apotheekgroep. Facturen en bestelbonnen worden geüpload en **automatisch omgezet naar gestructureerde data**, en een interne **chatbot beantwoordt procedurevragen** op basis van de eigen documenten — met bronvermelding en zonder verzinsels.
 
-Het project is opgebouwd rond een duidelijke scheiding van verantwoordelijkheden: een **ASP.NET Core-backend** orkestreert en beheert de data, een **Python-microservice** verzorgt de AI-taken, en een **React-frontend** vormt de gebruikersinterface.
+Het project is opgebouwd rond een duidelijke scheiding van verantwoordelijkheden: een **ASP.NET Core-backend** orkestreert en beheert de data, een **Python-microservice** verzorgt de AI-taken, en een **React-frontend** vormt de gebruikersinterface (met een licht/donker-thema).
 
-## Kernfunctionaliteit
+## Functies
 
-**1 · Slimme documentverwerking**
-Upload een factuur (PDF) → de tekst wordt geëxtraheerd → omgezet naar gestructureerde JSON (leverancier, factuurnummer, datum, subtotaal, btw-tarief en btw-bedrag, totaalbedrag, lijnitems) → opgeslagen in de databank → getoond in een doorzoekbare tabel met detailweergave.
+### 1 · Slimme documentverwerking
 
-**2 · Interne kennisassistent (RAG)**
-Procedure-documenten worden geïndexeerd als vector-embeddings. Een chat-endpoint haalt de meest relevante fragmenten op en genereert een antwoord met **bronvermelding**, en geeft expliciet aan wanneer het antwoord niet in de documenten staat — cruciaal tegen hallucinaties in een medische context.
+Upload een factuur (PDF) → de tekst wordt geëxtraheerd → een taalmodel zet ze om naar **gestructureerde JSON** (leverancier, factuurnummer, datum, subtotaal, btw-tarief en btw-bedrag, totaal, lijnitems) → opgeslagen in de databank → getoond in een doorzoekbare tabel. Elk document is doorklikbaar met een detailweergave waar je de geëxtraheerde velden **handmatig kan corrigeren**.
+
+<p align="center">
+  <img src="docs/screenshots/detail.png" alt="Detail en handmatige correctie" width="720">
+</p>
+
+Robuustheid staat centraal: de backend legt een upload eerst als `Pending` vast en roept dan pas de AI aan. Lukt de extractie, dan wordt het document `Processed`; faalt ze (AI onbereikbaar, onleesbare PDF), dan wordt het `Failed` met een foutboodschap. **Een upload gaat dus nooit verloren.**
+
+### 2 · Interne kennisassistent (RAG)
+
+Procedure-documenten (openingsuren, terugbetaling, koelketen…) worden in stukken geknipt en als **vector-embeddings** opgeslagen in pgvector. Bij een vraag zoekt de backend de meest relevante fragmenten op en laat het taalmodel daarop een antwoord formuleren — **met bronvermelding**, en met een expliciet "dit vind ik niet terug in de procedures" wanneer het antwoord er niet in staat. Cruciaal tegen hallucinaties in een medische context.
+
+<p align="center">
+  <img src="docs/screenshots/assistent.png" alt="Kennisassistent met bronvermelding" width="880">
+</p>
+
+De interface maakt de twee gescheiden gegevensstromen expliciet zichtbaar: **facturen** gaan naar de facturentabel, **procedures** naar de kennisbank. De assistent kan enkel antwoorden over wat in de kennisbank geïndexeerd is.
+
+<details>
+<summary>Licht &amp; donker thema</summary>
+
+<p align="center">
+  <img src="docs/screenshots/facturen-donker.png" alt="Donker thema" width="820">
+</p>
+</details>
 
 ## Architectuur
 
-```
-React (Vite)  ──HTTP/JSON──►  ASP.NET Core API  ──►  PostgreSQL (+ pgvector)
-                                     │
-                                     │  (interne HTTP-call)
-                                     ▼
-                          Python FastAPI (AI-service)
-                                     │
-                                     ▼
-                            Anthropic Claude API
-```
+<p align="center">
+  <img src="docs/architecture.svg" alt="Architectuurschema" width="820">
+</p>
 
-De **.NET-backend is de enige poort naar de front-end** en orkestreert alles; de **Python-service doet uitsluitend het AI-werk**. Zo werken beide technologieën samen, elk in hun sterkte.
+De **.NET-backend is de orchestrator en de enige poort naar de front-end**; de **Python-service doet uitsluitend het AI-werk** (tekstextractie, prompt naar het model, embeddings) en wordt intern via HTTP aangeroepen. De front-end raakt de Python-service, de databank of de AI-API's nooit rechtstreeks aan. Zo werken de technologieën samen, elk in hun sterkte.
 
 De backend volgt een gelaagde architectuur — `Controllers → Services → Repositories → DbContext` — met DTO's en dependency injection, zodat elke laag geïsoleerd en testbaar blijft.
 
@@ -47,37 +66,57 @@ De backend volgt een gelaagde architectuur — `Controllers → Services → Rep
 
 | Laag | Technologie |
 | --- | --- |
-| Backend | ASP.NET Core Web API (.NET 8), Entity Framework Core, JWT-auth |
+| Backend | ASP.NET Core Web API (.NET 8), Entity Framework Core, JWT-auth (BCrypt) |
 | Database | PostgreSQL 16 + pgvector |
-| AI-service | Python + FastAPI |
-| AI | Anthropic Claude API (extractie + chat) + Voyage AI (embeddings) |
+| AI-service | Python 3.12 + FastAPI |
+| AI | Anthropic Claude (extractie + chat) · Voyage AI (embeddings) |
 | Front-end | React + Vite + TypeScript + Tailwind CSS (zijbalk-UI, licht/donker-thema) |
 | Infra | Docker Compose |
 
 ## Lokaal draaien
 
-**Vereisten:** .NET 8 SDK, Docker Desktop.
+**Vereisten:** .NET 8 SDK, Python 3.12, Node.js, Docker Desktop.
 
-```bash
-# 1. Start PostgreSQL (met pgvector) via Docker
-docker compose up -d
+**Sleutels** — in `ai-service/.env` (zie [`.env.example`](ai-service/.env.example)):
 
-# 2. Start de API — migraties worden automatisch toegepast
-cd backend/PharmaDocs.Api
-dotnet run --launch-profile http
+```dotenv
+ANTHROPIC_API_KEY=sk-ant-...      # factuurextractie + RAG-antwoorden
+VOYAGE_API_KEY=pa-...             # embeddings voor de kennisassistent
 ```
 
-De API draait op `http://localhost:5035`, met Swagger op `http://localhost:5035/swagger`.
+De JWT-sleutel komt uit .NET user-secrets (nooit in Git):
 
-Voor het uploaden en extraheren van facturen draait ook de Python AI-service mee (zie [`ai-service/`](ai-service/)); de backend roept die intern aan op `http://localhost:8000`.
+```bash
+cd backend/PharmaDocs.Api
+dotnet user-secrets set "Jwt:Key" "<een-willekeurige-sleutel-van-min-32-tekens>"
+```
 
-### Endpoints (huidige stand)
+**Starten** (vier processen):
+
+```bash
+# 1. PostgreSQL (met pgvector) via Docker
+docker compose up -d
+
+# 2. Python AI-service
+cd ai-service && python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+.venv/Scripts/uvicorn app.main:app --port 8000
+
+# 3. .NET-backend — migraties worden automatisch toegepast bij opstart
+cd backend/PharmaDocs.Api && dotnet run --launch-profile http
+
+# 4. Front-end
+cd frontend && npm install && npm run dev
+```
+
+De front-end draait op `http://localhost:5173`, de API op `http://localhost:5035` (Swagger op `/swagger`), de AI-service op `http://localhost:8000`.
+
+### API-endpoints
 
 | Methode | Route | Auth | Omschrijving |
 | --- | --- | --- | --- |
 | `POST` | `/api/auth/register` | — | Account aanmaken, geeft een JWT terug |
 | `POST` | `/api/auth/login` | — | Inloggen, geeft een JWT terug |
-| `POST` | `/api/documents/upload` | 🔒 | Upload een factuur-PDF → interne AI-extractie → opgeslagen document |
+| `POST` | `/api/documents/upload` | 🔒 | Factuur-PDF uploaden → interne AI-extractie → opgeslagen document |
 | `GET` | `/api/documents` | 🔒 | Overzicht van verwerkte documenten |
 | `GET` | `/api/documents/{id}` | 🔒 | Detail met geëxtraheerde factuur en lijnitems |
 | `PUT` | `/api/documents/{id}/invoice` | 🔒 | Handmatige correctie van de factuurkop en lijnitems |
@@ -85,39 +124,28 @@ Voor het uploaden en extraheren van facturen draait ook de Python AI-service mee
 | `GET` | `/api/knowledge/sources` | 🔒 | Overzicht van geïndexeerde procedures |
 | `POST` | `/api/knowledge/ask` | 🔒 | Vraag stellen — antwoord uit de procedures met bronvermelding (RAG) |
 
-> Bij een upload legt de backend het document eerst als `Pending` vast en roept dan de Python-service aan. Lukt de extractie, dan wordt het `Processed` met de factuurgegevens; faalt ze (AI onbereikbaar, onleesbare PDF), dan wordt het `Failed` met een foutboodschap — een upload gaat dus nooit verloren.
-
 ## Projectstructuur
 
 ```
 PharmaDocs/
-├── global.json               # pint het SDK op .NET 8
-├── docker-compose.yml        # PostgreSQL 16 + pgvector
-├── backend/
-│   └── PharmaDocs.Api/        # ASP.NET Core Web API (orkestrator)
-│       ├── Controllers/       # HTTP-endpoints
-│       ├── Services/          # bedrijfslogica
-│       ├── Repositories/      # data-toegang
-│       ├── Data/              # EF Core DbContext
-│       ├── Models/            # entiteiten
-│       ├── DTOs/              # transferobjecten
-│       └── Migrations/        # EF Core-migraties
-├── ai-service/               # Python FastAPI (AI-taken)
-└── frontend/                 # React + Vite + TypeScript
+├── docker-compose.yml         # PostgreSQL 16 + pgvector
+├── backend/PharmaDocs.Api/    # ASP.NET Core Web API (orchestrator)
+│   ├── Controllers/  Services/  Repositories/  Data/  Models/  DTOs/  Migrations/
+├── ai-service/                # Python FastAPI (AI-taken)
+│   ├── app/                   # endpoints, extractie, embeddings, RAG
+│   └── prompts/               # versioneerde system-prompts
+├── frontend/                  # React + Vite + TypeScript
+└── docs/                      # architectuurschema + screenshots
 ```
 
-## Roadmap
+## Wat ik geleerd heb
 
-- [x] **Fundament** — backend-skelet, datamodel, EF Core-migratie, gelaagde architectuur
-- [x] **Authenticatie (JWT)** + front-end skelet — register/login, BCrypt, beveiligde endpoints, React-loginscherm
-- [x] **Python AI-service** — FastAPI met PDF-tekstextractie (`POST /extract`)
-- [x] **AI-factuurextractie** — `POST /extract-invoice`: PDF → Claude → gestructureerde JSON (strikte tool-use)
-- [x] **Koppeling `.NET ↔ Python`** — `POST /api/documents/upload`: backend orkestreert de AI-call en slaat het resultaat op in de DB
-- [x] **Front-end upload & overzicht** — drag & drop-upload met laadindicator, overzichtstabel met statussen (Verwerkt/Mislukt/In behandeling)
-- [x] **Detailweergave + handmatige correctie** — bewerkbare factuurkop en lijnitems, filter/zoeken op leverancier/status
-- [x] **RAG-indexering** — procedures chunken → Voyage-embeddings → opslaan in pgvector
-- [x] **RAG-chat met bronvermelding** — vraag → retrieval (pgvector) → Claude, antwoordt enkel uit de procedures
-- [x] **Kennisassistent-UI** — chatscherm + procedurebeheer (upload + geïndexeerde bronnen)
+- **Twee technologieën netjes laten samenwerken.** De .NET-backend als orchestrator en enige poort, met de Python-service puur voor het AI-werk, houdt de verantwoordelijkheden zuiver en elke kant testbaar.
+- **Betrouwbare AI-output afdwingen.** In plaats van "vraag om JSON en parse" gebruikt de extractie **geforceerde tool-use met een strikt JSON-schema**: het model kán enkel een geldige payload teruggeven. Vorm (schema) en interpretatie (prompt) blijven gescheiden.
+- **RAG en anti-hallucinatie.** Zoeken op *betekenis* (embeddings + cosinus-afstand in pgvector) i.p.v. op trefwoorden, en de grounding via de prompt afdwingen — antwoorden mét bron, en eerlijk "niet gevonden" buiten de documenten.
+- **Veerkrachtig ontwerp.** Een upload gaat nooit verloren (`Pending → Processed/Failed`), en zonder API-sleutels degradeert de AI netjes naar een `503` in plaats van te crashen.
+- **De details van EF Core.** O.a. dat `ValueGeneratedOnAdd`-sleutels die je zélf invult als "bestaat al" gelezen worden (`UPDATE` i.p.v. `INSERT`) — een subtiele bug die je één keer maakt en daarna herkent.
+- **Een onderhoudbare UI-architectuur.** Semantische design-tokens als één bron van waarheid maken een licht/donker-thema triviaal, en herbruikbare primitieven houden alles consistent.
 
 ## Licentie
 

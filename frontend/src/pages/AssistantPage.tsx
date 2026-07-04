@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import Markdown from 'react-markdown'
 import { Send, FileText, Sparkles, BookText } from 'lucide-react'
 import { api } from '../api/client'
 import { ProcedureUpload } from '../components/ProcedureUpload'
@@ -127,7 +128,9 @@ export function AssistantPage() {
               ) : (
                 <div key={m.id} className="flex justify-start">
                   <div className="max-w-[85%] rounded-2xl rounded-bl-sm border border-line bg-elevated px-4 py-3">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg">{m.text}</p>
+                    <div className="md text-sm leading-relaxed text-fg">
+                      <Markdown>{m.text}</Markdown>
+                    </div>
                     {m.sources && m.sources.length > 0 && (
                       <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-line pt-2.5">
                         <span className="text-xs text-subtle">Bronnen:</span>
