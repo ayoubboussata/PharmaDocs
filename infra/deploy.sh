@@ -60,6 +60,11 @@ for svc in "api:backend/PharmaDocs.Api" "ai:ai-service" "web:frontend"; do
 done
 
 echo "▶ PostgreSQL Flexible Server ($PG) — kan enkele minuten duren"
+# --public-access 0.0.0.0 = enkel Azure-diensten toegelaten, afgeschermd door het
+# wachtwoord. Voldoende voor een demo. Voor productie: private networking (VNet +
+# private DNS, géén publiek endpoint) — zie "De database afschermen" in
+# docs/DEPLOYMENT.md. Op Consumption werkt firewallen op één egress-IP niet
+# betrouwbaar (geen stabiel uitgaand IP).
 az postgres flexible-server create -g "$RG" -n "$PG" -l "$LOCATION" \
   --admin-user "$PG_ADMIN" --admin-password "$PG_PASSWORD" \
   --tier Burstable --sku-name Standard_B1ms --storage-size 32 --version 16 \
