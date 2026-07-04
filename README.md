@@ -51,7 +51,7 @@ De backend volgt een gelaagde architectuur — `Controllers → Services → Rep
 | Database | PostgreSQL 16 + pgvector |
 | AI-service | Python + FastAPI |
 | AI | Anthropic Claude API (extractie + chat) + Voyage AI (embeddings) |
-| Front-end | React + Vite + TypeScript + Tailwind CSS |
+| Front-end | React + Vite + TypeScript + Tailwind CSS (zijbalk-UI, licht/donker-thema) |
 | Infra | Docker Compose |
 
 ## Lokaal draaien
