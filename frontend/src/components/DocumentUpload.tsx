@@ -1,6 +1,8 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { AxiosError } from 'axios'
+import { UploadCloud } from 'lucide-react'
 import { api } from '../api/client'
+import { Spinner } from './ui/Spinner'
 import type { DocumentDetail } from '../types'
 
 interface DocumentUploadProps {
@@ -70,10 +72,10 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !uploading) inputRef.current?.click()
         }}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors ${
           dragging
-            ? 'border-emerald-500 bg-emerald-500/5'
-            : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
+            ? 'border-accent bg-accent-soft'
+            : 'border-line-strong bg-surface hover:border-accent/60'
         } ${uploading ? 'pointer-events-none opacity-70' : ''}`}
       >
         <input
@@ -88,22 +90,25 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
         />
 
         {uploading ? (
-          <div className="flex items-center gap-3 text-slate-300">
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-600 border-t-emerald-500" />
+          <div className="flex items-center gap-3 text-muted">
+            <Spinner className="h-5 w-5" />
             <span className="text-sm">Bezig met uploaden en extraheren…</span>
           </div>
         ) : (
           <>
-            <p className="text-sm font-medium text-slate-200">
-              Sleep een factuur-PDF hierheen of <span className="text-emerald-400">kies een bestand</span>
+            <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-accent-text">
+              <UploadCloud size={22} />
+            </span>
+            <p className="text-sm font-medium text-fg">
+              Sleep een factuur-PDF hierheen of <span className="text-accent-text">kies een bestand</span>
             </p>
-            <p className="mt-1 text-xs text-slate-500">PDF, max. 10 MB — de AI leest de gegevens automatisch uit</p>
+            <p className="mt-1 text-xs text-subtle">PDF, max. 10 MB — de AI leest de gegevens automatisch uit</p>
           </>
         )}
       </div>
 
       {error && (
-        <p className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+        <p className="mt-2 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>
       )}
     </div>
   )

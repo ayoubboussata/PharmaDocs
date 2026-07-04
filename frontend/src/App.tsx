@@ -4,6 +4,7 @@ import { RegisterPage } from './pages/RegisterPage'
 import { DocumentsPage } from './pages/DocumentsPage'
 import { DocumentDetailPage } from './pages/DocumentDetailPage'
 import { AssistantPage } from './pages/AssistantPage'
+import { AppLayout } from './components/AppLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 export default function App() {
@@ -11,30 +12,19 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+
       <Route
-        path="/documents"
         element={
           <ProtectedRoute>
-            <DocumentsPage />
+            <AppLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/documents/:id"
-        element={
-          <ProtectedRoute>
-            <DocumentDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assistant"
-        element={
-          <ProtectedRoute>
-            <AssistantPage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/documents/:id" element={<DocumentDetailPage />} />
+        <Route path="/assistant" element={<AssistantPage />} />
+      </Route>
+
       <Route path="*" element={<Navigate to="/documents" replace />} />
     </Routes>
   )

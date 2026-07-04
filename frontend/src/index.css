@@ -1,8 +1,109 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
+/*
+  Design-tokens — één bron van waarheid. Semantische namen (surface, fg, accent…)
+  die per thema van waarde wisselen. Componenten gebruiken enkel deze tokens,
+  nooit rauwe kleuren, zodat licht/donker overal automatisch klopt.
+*/
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --canvas: #f6f7f9;
+  --surface: #ffffff;
+  --elevated: #f1f3f6;
+  --sidebar: #ffffff;
+
+  --fg: #0f172a;
+  --muted: #5b6472;
+  --subtle: #8b94a3;
+
+  --line: #e6e8ec;
+  --line-strong: #d5d9df;
+
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-fg: #ffffff;
+  --accent-soft: #eaf1ff;
+  --accent-text: #1d4ed8;
+
+  --success: #067647;
+  --success-soft: #ebfdf2;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --warning: #b54708;
+  --warning-soft: #fff8eb;
+
+  --ring: rgba(37, 99, 235, 0.35);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+}
+
+[data-theme='dark'] {
   color-scheme: dark;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  --canvas: #0a0d13;
+  --surface: #12161e;
+  --elevated: #1a1f29;
+  --sidebar: #0d1117;
+
+  --fg: #e6e9ee;
+  --muted: #99a2b0;
+  --subtle: #6a7484;
+
+  --line: #222834;
+  --line-strong: #2f3743;
+
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(59, 130, 246, 0.14);
+  --accent-text: #93b4ff;
+
+  --success: #75e0a7;
+  --success-soft: rgba(52, 211, 153, 0.13);
+  --danger: #ff8a80;
+  --danger-soft: rgba(248, 113, 113, 0.13);
+  --warning: #fbbf6b;
+  --warning-soft: rgba(251, 191, 36, 0.13);
+
+  --ring: rgba(96, 165, 250, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Semantische tokens → Tailwind-utilities (bg-surface, text-fg, border-line, …).
+   `inline` zorgt dat de utilities de var() bewaren, zodat het thema live schakelt. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-sidebar: var(--sidebar);
+
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --shadow-card: var(--shadow-sm);
+  --shadow-pop: var(--shadow-md);
 }
 
 html,
@@ -13,4 +114,32 @@ body,
 
 body {
   margin: 0;
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Zachte, thema-bewuste scrollbars (detail dat 'af' aanvoelt). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Consistente, toegankelijke focus-ring op alle interactieve elementen. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+  border-radius: 8px;
 }
