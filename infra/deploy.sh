@@ -27,11 +27,13 @@ PG_PASSWORD="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9')Aa1!"
 JWT_KEY="$(openssl rand -base64 48)"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Op Windows (Git Bash) verstaat de native az-CLI geen /d/-paden → omzetten naar D:/.
+if command -v cygpath >/dev/null 2>&1; then ROOT="$(cygpath -m "$ROOT")"; fi
 
-echo "▶ Providers registreren (idempotent)"
-az provider register --namespace Microsoft.App -o none
-az provider register --namespace Microsoft.OperationalInsights -o none
-az provider register --namespace Microsoft.DBforPostgreSQL -o none
+echo "▶ Providers registreren (idempotent) — kan de eerste keer enkele minuten duren"
+for ns in Microsoft.ContainerRegistry Microsoft.App Microsoft.OperationalInsights Microsoft.DBforPostgreSQL; do
+  az provider register --namespace "$ns" --wait -o none
+done
 az extension add --name containerapp --upgrade --only-show-errors -o none 2>/dev/null || true
 
 echo "▶ Resource group ($RG)"
@@ -41,10 +43,17 @@ echo "▶ Container Registry ($ACR)"
 az acr create -g "$RG" -n "$ACR" --sku Basic --admin-enabled true -o none
 ACR_SERVER=$(az acr show -n "$ACR" --query loginServer -o tsv)
 
-echo "▶ Images bouwen in de cloud (backend, ai-service, frontend)"
-az acr build -r "$ACR" -t pharmadocs-api:latest "$ROOT/backend/PharmaDocs.Api" -o none
-az acr build -r "$ACR" -t pharmadocs-ai:latest  "$ROOT/ai-service"           -o none
-az acr build -r "$ACR" -t pharmadocs-web:latest "$ROOT/frontend"             -o none
+# Lokaal bouwen + pushen (server-side `az acr build` is niet beschikbaar op o.a.
+# Student-abonnementen). Vereist een draaiende lokale Docker.
+echo "▶ Docker-images bouwen en naar de registry pushen"
+az acr login -n "$ACR" -o none
+for svc in "api:backend/PharmaDocs.Api" "ai:ai-service" "web:frontend"; do
+  name="pharmadocs-${svc%%:*}"
+  ctx="${svc#*:}"
+  echo "  · $name"
+  docker build -q -t "$ACR_SERVER/$name:latest" "$ROOT/$ctx"
+  docker push -q "$ACR_SERVER/$name:latest"
+done
 
 echo "▶ PostgreSQL Flexible Server ($PG) — kan enkele minuten duren"
 az postgres flexible-server create -g "$RG" -n "$PG" -l "$LOCATION" \

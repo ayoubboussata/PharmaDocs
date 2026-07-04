@@ -71,7 +71,7 @@ De backend volgt een gelaagde architectuur — `Controllers → Services → Rep
 | AI-service | Python 3.12 + FastAPI |
 | AI | Anthropic Claude (extractie + chat) · Voyage AI (embeddings) |
 | Front-end | React + Vite + TypeScript + Tailwind CSS (zijbalk-UI, licht/donker-thema) |
-| Infra | Docker Compose |
+| Infra | Docker · Azure Container Apps · Azure Database for PostgreSQL |
 
 ## Lokaal draaien
 
@@ -124,6 +124,19 @@ De front-end draait op `http://localhost:5173`, de API op `http://localhost:5035
 | `GET` | `/api/knowledge/sources` | 🔒 | Overzicht van geïndexeerde procedures |
 | `POST` | `/api/knowledge/ask` | 🔒 | Vraag stellen — antwoord uit de procedures met bronvermelding (RAG) |
 
+## Deployment (Azure)
+
+De drie diensten zijn gecontaineriseerd en draaien op **Azure Container Apps**, met een beheerde **Azure Database for PostgreSQL** (pgvector). Enkel de front-end is publiek; de backend en AI-service hebben **interne ingress** en zijn dus niet rechtstreeks vanaf het internet bereikbaar. TLS wordt aan de ingress geregeld en de diensten schalen naar nul bij inactiviteit.
+
+Uitrollen gebeurt met één script — zie **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**:
+
+```bash
+export ANTHROPIC_API_KEY=...  VOYAGE_API_KEY=...
+bash infra/deploy.sh
+```
+
+Het bouwt de images, maakt PostgreSQL (met de `pgvector`-extensie toegelaten) en de Container Apps aan, en zet alle sleutels als **secrets** — niets staat in de images of in Git.
+
 ## Projectstructuur
 
 ```
@@ -146,6 +159,7 @@ PharmaDocs/
 - **Veerkrachtig ontwerp.** Een upload gaat nooit verloren (`Pending → Processed/Failed`), en zonder API-sleutels degradeert de AI netjes naar een `503` in plaats van te crashen.
 - **De details van EF Core.** O.a. dat `ValueGeneratedOnAdd`-sleutels die je zélf invult als "bestaat al" gelezen worden (`UPDATE` i.p.v. `INSERT`) — een subtiele bug die je één keer maakt en daarna herkent.
 - **Een onderhoudbare UI-architectuur.** Semantische design-tokens als één bron van waarheid maken een licht/donker-thema triviaal, en herbruikbare primitieven houden alles consistent.
+- **Van laptop naar cloud.** De hele stack containeriseren en uitrollen op Azure Container Apps: interne vs. publieke ingress, sleutels als secrets, een beheerde PostgreSQL met de `pgvector`-extensie, en omgaan met regio- en quotabeperkingen van een abonnement.
 
 ## Licentie
 

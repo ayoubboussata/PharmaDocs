@@ -43,3 +43,7 @@ Thumbs.db
 
 # ---- Uploaded files (runtime) ----
 uploads/
+
+# ---- Deploy-output (bevat geheimen: DB-wachtwoord, JWT-sleutel) ----
+infra/.deploy-secrets
+infra/.last-suffix

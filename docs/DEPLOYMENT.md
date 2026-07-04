@@ -19,7 +19,10 @@ Enkel de front-end is publiek; backend en AI-service zijn **intern** (enkel bere
 
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) — ingelogd met `az login`
 - Een actief Azure-abonnement
+- **Een draaiende lokale Docker** — het script bouwt de images lokaal en pusht ze naar de registry (server-side `az acr build` is op sommige abonnementen, o.a. *Azure for Students*, niet beschikbaar)
 - De AI-sleutels als omgevingsvariabelen
+
+> **Regio's.** Sommige abonnementen (o.a. *Azure for Students*) beperken de toegelaten regio's, en niet elke dienst is in elke toegelaten regio beschikbaar. Zet `LOCATION` op een toegelaten regio; staat een dienst (bv. PostgreSQL) die regio niet toe, kies dan een andere toegelaten regio voor dat onderdeel. De containers kunnen cross-region uit de registry pullen.
 
 ## Uitrollen
 
