@@ -46,8 +46,9 @@ Op het einde print het de publieke URL. De backend past de EF Core-migraties aut
 
 | Instelling | Bron |
 | --- | --- |
-| `ConnectionStrings__DefaultConnection` | secret op `pharmadocs-api` (met `Ssl Mode=Require`) |
+| `ConnectionStrings__DefaultConnection` | secret op `pharmadocs-api` (met `Ssl Mode=VerifyFull` — certificaat + hostname gevalideerd) |
 | `Jwt__Key` | secret op `pharmadocs-api` (willekeurig gegenereerd) |
+| `Seed__AdminEmail` / `Seed__AdminPassword` | eerste admin (registratie is admin-only); wachtwoord als secret, login bewaard in `infra/.deploy-secrets` |
 | `AiService__BaseUrl` | interne URL van `pharmadocs-ai` |
 | `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY` | secrets op `pharmadocs-ai` |
 | `API_URL`, `API_HOST` | interne URL van `pharmadocs-api` (voor de nginx-proxy) |
