@@ -31,6 +31,7 @@ export function UsersPage() {
       if (status === 409) setError('Er bestaat al een account met dit e-mailadres.')
       else if (status === 400) setError('Controleer het e-mailadres en wachtwoord (min. 8 tekens).')
       else if (status === 401 || status === 403) setError('Je hebt geen rechten om accounts aan te maken.')
+      else if (status === 429) setError('Te veel aanvragen. Wacht even en probeer het opnieuw.')
       else setError('Er ging iets mis. Probeer het opnieuw.')
     } finally {
       setLoading(false)

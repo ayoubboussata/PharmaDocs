@@ -34,6 +34,7 @@ export function AuthForm({ title, submitLabel, onSubmit, footer, note }: AuthFor
       if (status === 401) setError('Ongeldige inloggegevens.')
       else if (status === 409) setError('Er bestaat al een account met dit e-mailadres.')
       else if (status === 400) setError('Controleer je e-mailadres en wachtwoord (min. 8 tekens).')
+      else if (status === 429) setError('Te veel pogingen. Wacht even en probeer het opnieuw.')
       else setError('Er ging iets mis. Probeer het opnieuw.')
     } finally {
       setLoading(false)

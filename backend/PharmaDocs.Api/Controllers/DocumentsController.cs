@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PharmaDocs.Api.DTOs.Documents;
 using PharmaDocs.Api.Services;
 
@@ -43,10 +44,12 @@ public class DocumentsController : ControllerBase
     /// Een mislukte extractie levert een document met status <c>Failed</c> (geen fout).
     /// </summary>
     [HttpPost("upload")]
+    [EnableRateLimiting("ai")] // dure AI-extractie (Claude) → per gebruiker begrenzen
     [ProducesResponseType(typeof(DocumentDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
     [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<ActionResult<DocumentDetailDto>> Upload(IFormFile file, CancellationToken ct)
     {

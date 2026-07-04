@@ -1,5 +1,8 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -51,6 +54,47 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+// --- Rate limiting (M1): remt brute-force op auth en kostenmisbruik op de AI-endpoints ---
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Auth (login/registratie): per client-IP — vertraagt brute-force.
+    options.AddPolicy("auth", http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ClientIp(http),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+
+    // AI (duur: Claude/Voyage): per ingelogde gebruiker, anders per IP.
+    options.AddPolicy("ai", http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            UserOrIp(http),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1) }));
+
+    // Consistente 429 in hetzelfde JSON-formaat als de rest van de API.
+    options.OnRejected = async (ctx, ct) =>
+    {
+        if (ctx.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            ctx.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+        ctx.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await ctx.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            status = StatusCodes.Status429TooManyRequests,
+            detail = "Te veel aanvragen. Probeer het straks opnieuw."
+        }, ct);
+    };
+});
+
+// Achter de nginx/Container Apps-ingress: lees de echte client-IP uit X-Forwarded-For,
+// zodat de per-IP-limiet per bezoeker telt i.p.v. per proxy.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // De ingress is het enige pad naar de container; proxy-IP's zijn dynamisch.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // --- AI-service (interne Python-microservice) ---
 var aiSettings = builder.Configuration.GetSection(AiServiceSettings.SectionName).Get<AiServiceSettings>()
@@ -123,6 +167,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // --- HTTP-pipeline ---
+// Eerst: echte client-IP/scheme uit de proxy-headers halen.
+app.UseForwardedHeaders();
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -137,6 +184,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+// Na authenticatie: de "ai"-policy partitioneert op de ingelogde gebruiker.
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();
+
+// Partitiesleutels voor de rate limiter.
+static string ClientIp(HttpContext http) =>
+    http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+static string UserOrIp(HttpContext http) =>
+    http.User.FindFirst("sub")?.Value
+    ?? http.Connection.RemoteIpAddress?.ToString()
+    ?? "unknown";
