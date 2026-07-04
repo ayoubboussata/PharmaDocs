@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PharmaDocs.Api.DTOs.Knowledge;
 using PharmaDocs.Api.Services;
 
@@ -23,10 +24,12 @@ public class KnowledgeController : ControllerBase
     /// Bestaande stukken van dezelfde bron worden vervangen.
     /// </summary>
     [HttpPost("documents")]
+    [EnableRateLimiting("ai")] // dure embeddings (Voyage) → per gebruiker begrenzen
     [ProducesResponseType(typeof(KnowledgeIngestResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
     [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<ActionResult<KnowledgeIngestResponse>> Ingest(IFormFile file, CancellationToken ct)
@@ -49,8 +52,10 @@ public class KnowledgeController : ControllerBase
     /// geïndexeerde procedures, met bronvermelding.
     /// </summary>
     [HttpPost("ask")]
+    [EnableRateLimiting("ai")] // dure RAG-call (Voyage + Claude) → per gebruiker begrenzen
     [ProducesResponseType(typeof(AskResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<ActionResult<AskResponse>> Ask(AskRequest request, CancellationToken ct)
     {

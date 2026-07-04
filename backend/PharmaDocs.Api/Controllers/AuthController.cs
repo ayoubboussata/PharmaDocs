@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PharmaDocs.Api.DTOs.Auth;
 using PharmaDocs.Api.Services;
 
@@ -8,6 +9,7 @@ namespace PharmaDocs.Api.Controllers;
 /// <summary>Registratie (admin-only) en login. Login geeft een JWT-access-token terug.</summary>
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("auth")] // remt brute-force op login
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
