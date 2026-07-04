@@ -1,7 +1,13 @@
 export interface AuthResponse {
   token: string
   email: string
+  role: string
   expiresAt: string
+}
+
+export interface CreatedUserResponse {
+  email: string
+  role: string
 }
 
 export type DocumentStatus = 'Pending' | 'Processed' | 'Failed'

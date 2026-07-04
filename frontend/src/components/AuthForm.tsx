@@ -9,13 +9,14 @@ interface AuthFormProps {
   title: string
   submitLabel: string
   onSubmit: (email: string, password: string) => Promise<void>
-  footer: { text: string; linkText: string; to: string }
+  footer?: { text: string; linkText: string; to: string }
+  note?: string
 }
 
 const inputClass =
   'w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-fg placeholder:text-subtle transition-colors focus:border-accent'
 
-export function AuthForm({ title, submitLabel, onSubmit, footer }: AuthFormProps) {
+export function AuthForm({ title, submitLabel, onSubmit, footer, note }: AuthFormProps) {
   const { theme, toggle } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -100,12 +101,15 @@ export function AuthForm({ title, submitLabel, onSubmit, footer }: AuthFormProps
           </form>
         </div>
 
-        <p className="mt-6 text-center text-sm text-muted">
-          {footer.text}{' '}
-          <Link to={footer.to} className="font-medium text-accent-text hover:underline">
-            {footer.linkText}
-          </Link>
-        </p>
+        {footer && (
+          <p className="mt-6 text-center text-sm text-muted">
+            {footer.text}{' '}
+            <Link to={footer.to} className="font-medium text-accent-text hover:underline">
+              {footer.linkText}
+            </Link>
+          </p>
+        )}
+        {note && <p className="mt-6 text-center text-sm text-subtle">{note}</p>}
       </div>
     </div>
   )

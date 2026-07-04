@@ -5,43 +5,52 @@ import type { AuthResponse } from '../types'
 interface AuthState {
   token: string | null
   email: string | null
+  role: string | null
   isAuthenticated: boolean
+  isAdmin: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
 
 const EMAIL_KEY = 'pharmadocs.email'
+const ROLE_KEY = 'pharmadocs.role'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => tokenStorage.get())
   const [email, setEmail] = useState<string | null>(() => localStorage.getItem(EMAIL_KEY))
+  const [role, setRole] = useState<string | null>(() => localStorage.getItem(ROLE_KEY))
 
-  async function authenticate(path: 'login' | 'register', email: string, password: string) {
-    const { data } = await api.post<AuthResponse>(`/auth/${path}`, { email, password })
+  // Registratie is admin-only en gebeurt vanuit de app (zie UsersPage), niet hier.
+  async function login(email: string, password: string) {
+    const { data } = await api.post<AuthResponse>('/auth/login', { email, password })
     tokenStorage.set(data.token)
     localStorage.setItem(EMAIL_KEY, data.email)
+    localStorage.setItem(ROLE_KEY, data.role)
     setToken(data.token)
     setEmail(data.email)
+    setRole(data.role)
   }
 
   const value = useMemo<AuthState>(
     () => ({
       token,
       email,
+      role,
       isAuthenticated: Boolean(token),
-      login: (e, p) => authenticate('login', e, p),
-      register: (e, p) => authenticate('register', e, p),
+      isAdmin: role === 'Admin',
+      login,
       logout: () => {
         tokenStorage.clear()
         localStorage.removeItem(EMAIL_KEY)
+        localStorage.removeItem(ROLE_KEY)
         setToken(null)
         setEmail(null)
+        setRole(null)
       },
     }),
-    [token, email],
+    [token, email, role],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

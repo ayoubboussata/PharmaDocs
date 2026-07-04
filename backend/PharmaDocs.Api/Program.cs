@@ -44,7 +44,9 @@ builder.Services
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-            ClockSkew = TimeSpan.FromSeconds(30)
+            ClockSkew = TimeSpan.FromSeconds(30),
+            // De rol zit in de "role"-claim (niet de lange URI); zo werkt [Authorize(Roles = ...)].
+            RoleClaimType = "role"
         };
     });
 
@@ -114,6 +116,10 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+
+    // Eerste admin seeden (registratie is admin-only) uit de sectie "Seed".
+    DbSeeder.SeedAdmin(db, app.Configuration,
+        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
 }
 
 // --- HTTP-pipeline ---

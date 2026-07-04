@@ -25,6 +25,10 @@ PG_ADMIN="pharmadocs"
 PG_DB="pharmadocs"
 PG_PASSWORD="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9')Aa1!"
 JWT_KEY="$(openssl rand -base64 48)"
+# Eerste admin (registratie is admin-only). Wachtwoord wordt gegenereerd en als
+# Container Apps-secret bewaard; het adres is overschrijfbaar via ADMIN_EMAIL.
+ADMIN_EMAIL="${ADMIN_EMAIL:-admin@pharmadocs.be}"
+ADMIN_PASSWORD="$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9')Aa1!"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Op Windows (Git Bash) verstaat de native az-CLI geen /d/-paden → omzetten naar D:/.
@@ -83,8 +87,9 @@ CONN="Host=${PG}.postgres.database.azure.com;Port=5432;Database=${PG_DB};Usernam
 az containerapp create -g "$RG" -n pharmadocs-api --environment "$ENVIRONMENT" \
   --image "$ACR_SERVER/pharmadocs-api:latest" "${REG[@]}" \
   --target-port 8080 --ingress internal --min-replicas 0 --max-replicas 2 \
-  --secrets db-conn="$CONN" jwt-key="$JWT_KEY" \
+  --secrets db-conn="$CONN" jwt-key="$JWT_KEY" admin-password="$ADMIN_PASSWORD" \
   --env-vars ConnectionStrings__DefaultConnection=secretref:db-conn Jwt__Key=secretref:jwt-key \
+             Seed__AdminEmail="$ADMIN_EMAIL" Seed__AdminPassword=secretref:admin-password \
              AiService__BaseUrl="https://$AI_FQDN" ASPNETCORE_ENVIRONMENT=Production -o none
 API_FQDN=$(az containerapp show -g "$RG" -n pharmadocs-api --query properties.configuration.ingress.fqdn -o tsv)
 
@@ -95,6 +100,16 @@ az containerapp create -g "$RG" -n pharmadocs-web --environment "$ENVIRONMENT" \
   --env-vars API_URL="https://$API_FQDN" API_HOST="$API_FQDN" -o none
 WEB_FQDN=$(az containerapp show -g "$RG" -n pharmadocs-web --query properties.configuration.ingress.fqdn -o tsv)
 
+# Login-gegevens lokaal bewaren (gitignored) — je hebt de admin nodig om in te loggen
+# en van daaruit accounts aan te maken (registratie is admin-only).
+{
+  echo "WEB_FQDN=$WEB_FQDN"
+  echo "ADMIN_EMAIL=$ADMIN_EMAIL"
+  echo "ADMIN_PASSWORD=$ADMIN_PASSWORD"
+  echo "PG=$PG"
+} >> "$ROOT/infra/.deploy-secrets"
+
 echo ""
 echo "✅ Klaar!  Open:  https://$WEB_FQDN"
 echo "   Resource group: $RG   ·   Registry: $ACR   ·   DB: $PG"
+echo "   Admin-login: $ADMIN_EMAIL   ·   wachtwoord opgeslagen in infra/.deploy-secrets"

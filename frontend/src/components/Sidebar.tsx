@@ -1,16 +1,21 @@
 import { NavLink } from 'react-router-dom'
-import { FileText, Sparkles, Pill, Sun, Moon, LogOut } from 'lucide-react'
+import { FileText, Sparkles, Users, Pill, Sun, Moon, LogOut } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../theme/ThemeContext'
 
-const nav = [
+const baseNav = [
   { to: '/documents', label: 'Facturen', icon: FileText },
   { to: '/assistant', label: 'Kennisassistent', icon: Sparkles },
 ]
 
 export function Sidebar() {
-  const { email, logout } = useAuth()
+  const { email, isAdmin, logout } = useAuth()
   const { theme, toggle } = useTheme()
+
+  // "Gebruikers" enkel voor admins (registratie is admin-only).
+  const nav = isAdmin
+    ? [...baseNav, { to: '/users', label: 'Gebruikers', icon: Users }]
+    : baseNav
 
   const initial = email?.[0]?.toUpperCase() ?? '?'
 

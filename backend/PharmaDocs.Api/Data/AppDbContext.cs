@@ -28,6 +28,11 @@ public class AppDbContext : DbContext
             entity.Property(u => u.Email).IsRequired().HasMaxLength(256);
             entity.Property(u => u.PasswordHash).IsRequired();
 
+            // Rol als leesbare string in de databank i.p.v. een int.
+            entity.Property(u => u.Role)
+                  .HasConversion<string>()
+                  .HasMaxLength(20);
+
             // E-mail moet uniek zijn (geen twee accounts op hetzelfde adres).
             entity.HasIndex(u => u.Email).IsUnique();
         });
