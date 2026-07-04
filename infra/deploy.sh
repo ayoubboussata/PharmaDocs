@@ -83,7 +83,10 @@ az containerapp create -g "$RG" -n pharmadocs-ai --environment "$ENVIRONMENT" \
 AI_FQDN=$(az containerapp show -g "$RG" -n pharmadocs-ai --query properties.configuration.ingress.fqdn -o tsv)
 
 echo "▶ Backend (interne ingress)"
-CONN="Host=${PG}.postgres.database.azure.com;Port=5432;Database=${PG_DB};Username=${PG_ADMIN};Password=${PG_PASSWORD};Ssl Mode=Require;Trust Server Certificate=true"
+# Ssl Mode=VerifyFull valideert het servercertificaat én de hostname (geen MITM op de
+# DB-link). Azure PostgreSQL gebruikt een publiek vertrouwd certificaat, dus de
+# CA-bundle in de container volstaat — geen eigen root-certificaat nodig.
+CONN="Host=${PG}.postgres.database.azure.com;Port=5432;Database=${PG_DB};Username=${PG_ADMIN};Password=${PG_PASSWORD};Ssl Mode=VerifyFull"
 az containerapp create -g "$RG" -n pharmadocs-api --environment "$ENVIRONMENT" \
   --image "$ACR_SERVER/pharmadocs-api:latest" "${REG[@]}" \
   --target-port 8080 --ingress internal --min-replicas 0 --max-replicas 2 \
