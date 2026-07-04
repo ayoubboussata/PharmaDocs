@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaDocs.Api.DTOs.Auth;
 using PharmaDocs.Api.Services;
 
 namespace PharmaDocs.Api.Controllers;
 
-/// <summary>Registratie en login. Geeft bij succes een JWT-access-token terug.</summary>
+/// <summary>Registratie (admin-only) en login. Login geeft een JWT-access-token terug.</summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -13,14 +14,20 @@ public class AuthController : ControllerBase
 
     public AuthController(IAuthService auth) => _auth = auth;
 
-    /// <summary>Maakt een nieuw account aan.</summary>
+    /// <summary>
+    /// Maakt een nieuw account aan. Registratie staat bewust <b>niet</b> open voor de
+    /// buitenwereld: enkel een ingelogde admin mag accounts aanmaken.
+    /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost("register")]
-    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CreatedUserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request, CancellationToken ct)
+    public async Task<ActionResult<CreatedUserResponse>> Register(RegisterRequest request, CancellationToken ct)
     {
-        var response = await _auth.RegisterAsync(request, ct);
-        return Ok(response);
+        var created = await _auth.RegisterAsync(request, ct);
+        return StatusCode(StatusCodes.Status201Created, created);
     }
 
     /// <summary>Logt in met e-mail + wachtwoord.</summary>

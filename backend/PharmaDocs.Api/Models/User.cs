@@ -1,3 +1,5 @@
+using PharmaDocs.Api.Models.Enums;
+
 namespace PharmaDocs.Api.Models;
 
 /// <summary>
@@ -13,6 +15,9 @@ public class User
 
     /// <summary>BCrypt-hash van het wachtwoord.</summary>
     public string PasswordHash { get; set; } = string.Empty;
+
+    /// <summary>Rol; enkel een Admin mag nieuwe accounts aanmaken.</summary>
+    public UserRole Role { get; set; } = UserRole.User;
 
     /// <summary>Tijdstip van registratie (UTC).</summary>
     public DateTime CreatedAt { get; set; }

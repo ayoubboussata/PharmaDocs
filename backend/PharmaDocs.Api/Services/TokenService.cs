@@ -22,6 +22,9 @@ public class TokenService : ITokenService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            // Rol als "role"-claim; Program.cs zet RoleClaimType hierop zodat
+            // [Authorize(Roles = "Admin")] werkt.
+            new Claim("role", user.Role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

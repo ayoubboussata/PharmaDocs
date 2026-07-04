@@ -1,6 +1,7 @@
 using PharmaDocs.Api.Common.Exceptions;
 using PharmaDocs.Api.DTOs.Auth;
 using PharmaDocs.Api.Models;
+using PharmaDocs.Api.Models.Enums;
 using PharmaDocs.Api.Repositories;
 
 namespace PharmaDocs.Api.Services;
@@ -16,7 +17,7 @@ public class AuthService : IAuthService
         _tokens = tokens;
     }
 
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
+    public async Task<CreatedUserResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
     {
         var email = request.Email.Trim().ToLowerInvariant();
 
@@ -29,12 +30,14 @@ public class AuthService : IAuthService
             Email = email,
             // Enhanced = SHA-384 pre-hash, geen stille afkapping op 72 bytes.
             PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password, workFactor: 12),
+            // Door een admin aangemaakte accounts zijn gewone gebruikers.
+            Role = UserRole.User,
             CreatedAt = DateTime.UtcNow
         };
 
         await _users.AddAsync(user, ct);
 
-        return BuildResponse(user);
+        return new CreatedUserResponse(user.Email, user.Role.ToString());
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default)
@@ -53,6 +56,6 @@ public class AuthService : IAuthService
     private AuthResponse BuildResponse(User user)
     {
         var token = _tokens.CreateToken(user);
-        return new AuthResponse(token.Token, user.Email, token.ExpiresAt);
+        return new AuthResponse(token.Token, user.Email, user.Role.ToString(), token.ExpiresAt);
     }
 }

@@ -14,7 +14,7 @@ export function LoginPage() {
         await login(email, password)
         navigate('/documents')
       }}
-      footer={{ text: 'Nog geen account?', linkText: 'Registreer', to: '/register' }}
+      note="Account nodig? Vraag een beheerder om er een aan te maken."
     />
   )
 }
