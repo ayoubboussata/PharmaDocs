@@ -53,6 +53,13 @@ public class AppDbContext : DbContext
                   .WithOne(i => i.Document)
                   .HasForeignKey<ExtractedInvoice>(i => i.DocumentId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            // Eigenaar (uploader). FK naar Users; EF legt automatisch een index op UserId.
+            // Cascade: verdwijnt de gebruiker, dan ook zijn documenten.
+            entity.HasOne<User>()
+                  .WithMany()
+                  .HasForeignKey(d => d.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ExtractedInvoice>(entity =>

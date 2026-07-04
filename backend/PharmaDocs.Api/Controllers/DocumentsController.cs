@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using PharmaDocs.Api.Common;
 using PharmaDocs.Api.DTOs.Documents;
 using PharmaDocs.Api.Services;
 
@@ -24,7 +25,7 @@ public class DocumentsController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<DocumentSummaryDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<DocumentSummaryDto>>> GetAll(CancellationToken ct)
     {
-        var documents = await _service.GetAllAsync(ct);
+        var documents = await _service.GetAllAsync(User.GetUserId(), ct);
         return Ok(documents);
     }
 
@@ -34,7 +35,7 @@ public class DocumentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DocumentDetailDto>> GetById(Guid id, CancellationToken ct)
     {
-        var document = await _service.GetByIdAsync(id, ct);
+        var document = await _service.GetByIdAsync(id, User.GetUserId(), ct);
         return document is null ? NotFound() : Ok(document);
     }
 
@@ -53,7 +54,7 @@ public class DocumentsController : ControllerBase
     [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<ActionResult<DocumentDetailDto>> Upload(IFormFile file, CancellationToken ct)
     {
-        var document = await _service.UploadAndExtractAsync(file, ct);
+        var document = await _service.UploadAndExtractAsync(file, User.GetUserId(), ct);
         return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
     }
 
@@ -68,7 +69,7 @@ public class DocumentsController : ControllerBase
     public async Task<ActionResult<DocumentDetailDto>> UpdateInvoice(
         Guid id, UpdateInvoiceRequest request, CancellationToken ct)
     {
-        var updated = await _service.UpdateInvoiceAsync(id, request, ct);
+        var updated = await _service.UpdateInvoiceAsync(id, User.GetUserId(), request, ct);
         return updated is null ? NotFound() : Ok(updated);
     }
 }

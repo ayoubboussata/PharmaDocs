@@ -26,19 +26,19 @@ public class DocumentService : IDocumentService
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<DocumentSummaryDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<DocumentSummaryDto>> GetAllAsync(Guid userId, CancellationToken ct = default)
     {
-        var documents = await _repository.GetAllAsync(ct);
+        var documents = await _repository.GetAllAsync(userId, ct);
         return documents.Select(d => d.ToSummaryDto()).ToList();
     }
 
-    public async Task<DocumentDetailDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<DocumentDetailDto?> GetByIdAsync(Guid id, Guid userId, CancellationToken ct = default)
     {
-        var document = await _repository.GetByIdAsync(id, ct);
+        var document = await _repository.GetByIdAsync(id, userId, ct);
         return document?.ToDetailDto();
     }
 
-    public async Task<DocumentDetailDto> UploadAndExtractAsync(IFormFile file, CancellationToken ct = default)
+    public async Task<DocumentDetailDto> UploadAndExtractAsync(IFormFile file, Guid userId, CancellationToken ct = default)
     {
         ValidateUpload(file);
 
@@ -47,6 +47,7 @@ public class DocumentService : IDocumentService
         var document = new Document
         {
             Id = Guid.NewGuid(),
+            UserId = userId, // eigenaar = uploader (privé per gebruiker)
             FileName = file.FileName,
             ContentType = file.ContentType,
             FileSizeBytes = file.Length,
@@ -78,9 +79,9 @@ public class DocumentService : IDocumentService
     }
 
     public async Task<DocumentDetailDto?> UpdateInvoiceAsync(
-        Guid id, UpdateInvoiceRequest request, CancellationToken ct = default)
+        Guid id, Guid userId, UpdateInvoiceRequest request, CancellationToken ct = default)
     {
-        var document = await _repository.GetTrackedByIdAsync(id, ct);
+        var document = await _repository.GetTrackedByIdAsync(id, userId, ct);
         if (document is null)
             return null;
         if (document.ExtractedInvoice is null)

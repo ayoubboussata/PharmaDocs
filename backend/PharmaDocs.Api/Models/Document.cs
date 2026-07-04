@@ -22,6 +22,12 @@ public class Document
     /// <summary>Tijdstip van upload (UTC).</summary>
     public DateTime UploadedAt { get; set; }
 
+    /// <summary>
+    /// Eigenaar (uploader). Facturen zijn privé per gebruiker: enkel de uploader
+    /// ziet/corrigeert ze. Nullable voor legacy-rijen van vóór deze wijziging.
+    /// </summary>
+    public Guid? UserId { get; set; }
+
     /// <summary>Waar de verwerking staat.</summary>
     public DocumentStatus Status { get; set; } = DocumentStatus.Pending;
 
