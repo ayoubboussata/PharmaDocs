@@ -1,0 +1,75 @@
+name: Build en deploy naar Azure
+
+# Bij elke push naar main: de drie images bouwen, naar de Container Registry
+# pushen (getagd met de commit-SHA) en de Container Apps naar die tag updaten.
+# Handmatig starten kan ook via de "Run workflow"-knop (workflow_dispatch).
+on:
+  push:
+    branches: [main]
+    # Docs-only wijzigingen hoeven geen deploy te triggeren.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+# Nodig voor passwordless login via OIDC (federated credentials).
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RG: rg-pharmadocs
+  ACR_NAME: crpharmadocse767d1
+
+jobs:
+  # ── 1) De drie images parallel bouwen en pushen ──────────────────────────
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            context: backend/PharmaDocs.Api
+          - name: ai
+            context: ai-service
+          - name: web
+            context: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inloggen op Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Inloggen op de Container Registry
+        run: az acr login -n "${ACR_NAME}"
+
+      - name: Bouwen en pushen (pharmadocs-${{ matrix.name }})
+        run: |
+          IMAGE="${ACR_NAME}.azurecr.io/pharmadocs-${{ matrix.name }}"
+          docker build -t "${IMAGE}:${GITHUB_SHA}" -t "${IMAGE}:latest" "${{ matrix.context }}"
+          docker push "${IMAGE}:${GITHUB_SHA}"
+          docker push "${IMAGE}:latest"
+
+  # ── 2) De Container Apps naar de nieuwe image-tag updaten ─────────────────
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inloggen op Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Container Apps updaten naar de nieuwe revisie
+        run: |
+          for svc in ai api web; do
+            IMAGE="${ACR_NAME}.azurecr.io/pharmadocs-${svc}:${GITHUB_SHA}"
+            echo "▶ pharmadocs-${svc} → ${IMAGE}"
+            az containerapp update -g "${AZURE_RG}" -n "pharmadocs-${svc}" --image "${IMAGE}" -o none
+          done
