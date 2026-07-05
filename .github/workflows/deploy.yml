@@ -1,3 +1,7 @@
+# CI/CD naar Azure Container Apps.
+# Vereiste repo-secrets (Settings → Secrets and variables → Actions):
+#   AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID  (OIDC, passwordless).
+# Handmatig starten kan via Actions → deze workflow → "Run workflow".
 name: Build en deploy naar Azure
 
 # Bij elke push naar main: de drie images bouwen, naar de Container Registry
