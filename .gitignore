@@ -35,11 +35,13 @@ venv/
 .pytest_cache/
 .mypy_cache/
 
-# ---- IDE / OS ----
+# ---- IDE / OS / tooling ----
 .idea/
 *.swp
 .DS_Store
 Thumbs.db
+# Lokale agent-/tooling-config (launch-profielen, permission-allowlist) — niet delen.
+.claude/
 
 # ---- Uploaded files (runtime) ----
 uploads/

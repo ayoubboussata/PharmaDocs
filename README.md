@@ -84,12 +84,15 @@ ANTHROPIC_API_KEY=sk-ant-...      # factuurextractie + RAG-antwoorden
 VOYAGE_API_KEY=pa-...             # embeddings voor de kennisassistent
 ```
 
-De JWT-sleutel komt uit .NET user-secrets (nooit in Git):
+De JWT-sleutel en het dev-admin-wachtwoord komen uit .NET user-secrets (nooit in Git). Registratie is admin-only, dus het admin-wachtwoord seedt de eerste account:
 
 ```bash
 cd backend/PharmaDocs.Api
 dotnet user-secrets set "Jwt:Key" "<een-willekeurige-sleutel-van-min-32-tekens>"
+dotnet user-secrets set "Seed:AdminPassword" "<een-sterk-wachtwoord>"
 ```
+
+Inloggen doe je daarna met `admin@pharmadocs.local` + dat wachtwoord.
 
 **Starten** (vier processen):
 
