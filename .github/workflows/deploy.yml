@@ -31,6 +31,7 @@ jobs:
   # ── 1) De drie images parallel bouwen en pushen ──────────────────────────
   build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         include:
@@ -64,6 +65,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Inloggen op Azure (OIDC)
         uses: azure/login@v2
