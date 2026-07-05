@@ -22,6 +22,7 @@ export interface DocumentSummary {
   invoiceDate: string | null
   totalAmount: number | null
   currency: string | null
+  category: string | null
 }
 
 export interface InvoiceLineItem {
@@ -42,6 +43,7 @@ export interface ExtractedInvoice {
   vatAmount: number
   totalAmount: number
   currency: string
+  category: string | null
   lineItems: InvoiceLineItem[]
 }
 
@@ -72,4 +74,27 @@ export interface KnowledgeIngestResponse {
 export interface AskResponse {
   answer: string
   sources: string[]
+}
+
+// --- Dashboard ---
+
+export interface SpendByLabel {
+  label: string
+  total: number
+  count: number
+}
+
+export interface SpendByMonth {
+  month: string
+  total: number
+  count: number
+}
+
+export interface DashboardSummary {
+  totalSpend: number
+  invoiceCount: number
+  currency: string
+  bySupplier: SpendByLabel[]
+  byMonth: SpendByMonth[]
+  byCategory: SpendByLabel[]
 }

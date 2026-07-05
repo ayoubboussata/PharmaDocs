@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { FileText, Sparkles, Users, Pill, Sun, Moon, LogOut } from 'lucide-react'
+import { LayoutDashboard, FileText, Sparkles, Users, Pill, Sun, Moon, LogOut } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../theme/ThemeContext'
 
 const baseNav = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/documents', label: 'Facturen', icon: FileText },
   { to: '/assistant', label: 'Kennisassistent', icon: Sparkles },
 ]

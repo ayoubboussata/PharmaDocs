@@ -15,6 +15,7 @@ public record UpdateInvoiceRequest(
     [Range(0, 9_999_999)] decimal VatAmount,
     [Range(0, 9_999_999)] decimal TotalAmount,
     [Required, MaxLength(8)] string Currency,
+    [MaxLength(50)] string? Category,
     List<UpdateLineItemRequest> LineItems);
 
 /// <summary>Eén te bewaren factuurlijn.</summary>

@@ -29,6 +29,15 @@ Regels:
 - **Btw-bedrag** (`vatAmount`): het bedrag aan btw (vaak "BTW 6%"). Als getal met punt als decimaalteken.
 - **Totaalbedrag** (`totalAmount`): het eindbedrag dat betaald moet worden, **inclusief** btw (vaak "Totaal te betalen"). Als getal, met punt als decimaalteken (bv. `467.46`). Geen valutasymbool, geen duizendtalscheiding.
 - **Munteenheid** (`currency`): ISO-code van 3 letters (bv. `EUR`). Standaard `EUR` als niets vermeld staat.
+- **Categorie** (`category`): de kostenpost van de factuur, gekozen uit **exact** deze lijst (op basis van de leverancier en de lijnitems):
+  - `Geneesmiddelen` — receptplichtige en OTC-medicatie, farmaceutische groothandel.
+  - `Medisch materiaal` — verbandmateriaal, injectiemateriaal, medische hulpmiddelen, toestellen.
+  - `Parafarmacie` — verzorging, cosmetica, voedingssupplementen, baby- en gezondheidsproducten.
+  - `Kantoor & administratie` — kantoorbenodigdheden, drukwerk, boekhouding, verzekeringen.
+  - `IT & software` — software, licenties, hardware, IT-diensten.
+  - `Onderhoud & energie` — onderhoud, herstellingen, huur, elektriciteit, gas, water.
+  - `Diensten` — professionele diensten (juridisch, consultancy, transport, marketing) die niet elders passen.
+  - `Overige` — als geen enkele categorie duidelijk past. Verzin geen categorie buiten deze lijst.
 - **Lijnitems** (`lineItems`): één item per productlijn, met:
   - `description`: de omschrijving van het product/de dienst.
   - `quantity`: het aantal (getal).

@@ -11,4 +11,5 @@ public record ExtractedInvoiceDto(
     decimal VatAmount,
     decimal TotalAmount,
     string Currency,
+    string? Category,
     IReadOnlyList<InvoiceLineItemDto> LineItems);

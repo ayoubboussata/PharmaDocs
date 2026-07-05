@@ -58,6 +58,15 @@ public class DocumentsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
     }
 
+    /// <summary>Exporteert alle facturen van de gebruiker als CSV (opent in Excel).</summary>
+    [HttpGet("export")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Export(CancellationToken ct)
+    {
+        var csv = await _service.ExportCsvAsync(User.GetUserId(), ct);
+        return File(csv, "text/csv", $"pharmadocs-facturen-{DateTime.UtcNow:yyyy-MM-dd}.csv");
+    }
+
     /// <summary>
     /// Handmatige correctie van de geëxtraheerde factuur (kop + lijnitems).
     /// De meegestuurde lijnitems vervangen de bestaande volledig.

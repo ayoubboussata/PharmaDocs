@@ -24,4 +24,10 @@ public interface IDocumentService
     /// document terug, of <c>null</c> als het niet bestaat of niet van deze gebruiker is.
     /// </summary>
     Task<DocumentDetailDto?> UpdateInvoiceAsync(Guid id, Guid userId, UpdateInvoiceRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Bouwt een CSV-export (UTF-8 met BOM, één rij per document) van alle facturen
+    /// van <paramref name="userId"/>, klaar om in Excel te openen.
+    /// </summary>
+    Task<byte[]> ExportCsvAsync(Guid userId, CancellationToken ct = default);
 }

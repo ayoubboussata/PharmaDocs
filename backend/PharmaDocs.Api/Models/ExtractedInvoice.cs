@@ -35,6 +35,12 @@ public class ExtractedInvoice
     /// <summary>Munteenheid, standaard EUR.</summary>
     public string Currency { get; set; } = "EUR";
 
+    /// <summary>
+    /// Kostenpost-categorie die de AI aan de factuur toewijst (bv. "Geneesmiddelen").
+    /// Uit een vaste lijst; null als het model geen categorie kon bepalen.
+    /// </summary>
+    public string? Category { get; set; }
+
     /// <summary>Tijdstip waarop de extractie werd opgeslagen (UTC).</summary>
     public DateTime CreatedAt { get; set; }
 

@@ -56,6 +56,23 @@ INVOICE_TOOL = {
             },
             "totalAmount": {"type": "number"},
             "currency": {"type": "string"},
+            "category": {
+                "type": "string",
+                "enum": [
+                    "Geneesmiddelen",
+                    "Medisch materiaal",
+                    "Parafarmacie",
+                    "Kantoor & administratie",
+                    "IT & software",
+                    "Onderhoud & energie",
+                    "Diensten",
+                    "Overige",
+                ],
+                "description": (
+                    "Kostenpost-categorie van de factuur, gekozen uit de vaste lijst. "
+                    "Kies op basis van leverancier en lijnitems; bij twijfel 'Overige'."
+                ),
+            },
             "lineItems": {
                 "type": "array",
                 "items": {
@@ -80,6 +97,7 @@ INVOICE_TOOL = {
             "vatAmount",
             "totalAmount",
             "currency",
+            "category",
             "lineItems",
         ],
     },
