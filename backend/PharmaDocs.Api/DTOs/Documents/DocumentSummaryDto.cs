@@ -13,4 +13,5 @@ public record DocumentSummaryDto(
     string? InvoiceNumber,
     DateOnly? InvoiceDate,
     decimal? TotalAmount,
-    string? Currency);
+    string? Currency,
+    string? Category);

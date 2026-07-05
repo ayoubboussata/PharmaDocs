@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RefreshCw, Search, ChevronRight } from 'lucide-react'
+import { RefreshCw, Search, ChevronRight, Download } from 'lucide-react'
 import { api } from '../api/client'
 import { DocumentUpload } from '../components/DocumentUpload'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -33,6 +33,26 @@ export function DocumentsPage() {
   const [notice, setNotice] = useState<{ type: 'ok' | 'warn'; text: string } | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | DocumentStatus>('all')
+  const [exporting, setExporting] = useState(false)
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      const res = await api.get('/documents/export', { responseType: 'blob' })
+      const url = URL.createObjectURL(res.data as Blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `pharmadocs-facturen-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setNotice({ type: 'warn', text: 'Exporteren mislukte. Probeer het opnieuw.' })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const loadDocuments = useCallback(async () => {
     setError(null)
@@ -85,10 +105,21 @@ export function DocumentsPage() {
         title="Facturen"
         subtitle="Upload een factuur; de AI leest de gegevens automatisch uit."
         actions={
-          <Button variant="secondary" size="sm" onClick={() => void loadDocuments()}>
-            <RefreshCw size={15} />
-            Vernieuwen
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void handleExport()}
+              disabled={exporting || documents.length === 0}
+            >
+              <Download size={15} />
+              {exporting ? 'Exporteren…' : 'Exporteren'}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => void loadDocuments()}>
+              <RefreshCw size={15} />
+              Vernieuwen
+            </Button>
+          </>
         }
       />
 
@@ -151,6 +182,7 @@ export function DocumentsPage() {
                 <tr className="border-b border-line text-xs uppercase tracking-wide text-subtle">
                   <th className="px-4 py-3 font-medium">Bestand</th>
                   <th className="px-4 py-3 font-medium">Leverancier</th>
+                  <th className="px-4 py-3 font-medium">Categorie</th>
                   <th className="px-4 py-3 font-medium">Factuurnr.</th>
                   <th className="px-4 py-3 font-medium">Datum</th>
                   <th className="px-4 py-3 font-medium">Totaal</th>
@@ -169,6 +201,9 @@ export function DocumentsPage() {
                     >
                       <td className="px-4 py-3 font-medium text-fg">{doc.fileName}</td>
                       <td className="px-4 py-3 text-muted">{doc.supplierName ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        {doc.category ? <Badge tone="accent">{doc.category}</Badge> : <span className="text-subtle">—</span>}
+                      </td>
                       <td className="px-4 py-3 text-muted">{doc.invoiceNumber ?? '—'}</td>
                       <td className="px-4 py-3 text-muted">{formatDate(doc.invoiceDate)}</td>
                       <td className="px-4 py-3 tabular-nums text-fg">

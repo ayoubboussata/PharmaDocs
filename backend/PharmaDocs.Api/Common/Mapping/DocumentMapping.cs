@@ -18,7 +18,8 @@ public static class DocumentMapping
         document.ExtractedInvoice?.InvoiceNumber,
         document.ExtractedInvoice?.InvoiceDate,
         document.ExtractedInvoice?.TotalAmount,
-        document.ExtractedInvoice?.Currency);
+        document.ExtractedInvoice?.Currency,
+        document.ExtractedInvoice?.Category);
 
     public static DocumentDetailDto ToDetailDto(this Document document) => new(
         document.Id,
@@ -40,6 +41,7 @@ public static class DocumentMapping
         invoice.VatAmount,
         invoice.TotalAmount,
         invoice.Currency,
+        invoice.Category,
         invoice.LineItems.Select(l => l.ToDto()).ToList());
 
     public static InvoiceLineItemDto ToDto(this InvoiceLineItem line) => new(

@@ -67,6 +67,7 @@ public class AppDbContext : DbContext
             entity.Property(i => i.SupplierName).IsRequired().HasMaxLength(300);
             entity.Property(i => i.InvoiceNumber).IsRequired().HasMaxLength(100);
             entity.Property(i => i.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(i => i.Category).HasMaxLength(50);
             entity.Property(i => i.SubtotalAmount).HasPrecision(18, 2);
             entity.Property(i => i.VatRate).HasPrecision(5, 2);
             entity.Property(i => i.VatAmount).HasPrecision(18, 2);

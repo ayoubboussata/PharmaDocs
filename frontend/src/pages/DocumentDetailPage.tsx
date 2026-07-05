@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, X, Check } from 'lucide-react'
 import { api } from '../api/client'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Button } from '../components/ui/Button'
+import { INVOICE_CATEGORIES } from '../categories'
 import type { DocumentDetail } from '../types'
 
 /** Bewerkbaar model: numerieke velden als string voor vlot typen. */
@@ -24,6 +25,7 @@ interface InvoiceForm {
   vatAmount: string
   totalAmount: string
   currency: string
+  category: string
   lineItems: LineForm[]
 }
 
@@ -43,6 +45,7 @@ function toForm(doc: DocumentDetail): InvoiceForm {
     vatAmount: String(inv.vatAmount),
     totalAmount: String(inv.totalAmount),
     currency: inv.currency,
+    category: inv.category ?? '',
     lineItems: inv.lineItems.map((l) => ({
       description: l.description,
       quantity: String(l.quantity),
@@ -135,6 +138,7 @@ export function DocumentDetailPage() {
         vatAmount: num(form.vatAmount),
         totalAmount: num(form.totalAmount),
         currency: form.currency,
+        category: form.category.trim() === '' ? null : form.category,
         lineItems: form.lineItems.map((l) => ({
           description: l.description,
           quantity: num(l.quantity),
@@ -244,6 +248,21 @@ export function DocumentDetailPage() {
                     onChange={(e) => setField('currency', e.target.value)}
                     maxLength={8}
                   />
+                </label>
+                <label className="sm:col-span-2">
+                  <span className={labelClass}>Categorie (kostenpost)</span>
+                  <select
+                    className={inputClass}
+                    value={form.category}
+                    onChange={(e) => setField('category', e.target.value)}
+                  >
+                    <option value="">— Niet gecategoriseerd —</option>
+                    {INVOICE_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
 

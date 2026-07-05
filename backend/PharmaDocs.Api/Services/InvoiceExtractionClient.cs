@@ -90,6 +90,7 @@ public class InvoiceExtractionClient : IInvoiceExtractionClient
         [property: JsonPropertyName("vatAmount")] decimal VatAmount,
         [property: JsonPropertyName("totalAmount")] decimal TotalAmount,
         [property: JsonPropertyName("currency")] string Currency,
+        [property: JsonPropertyName("category")] string? Category,
         [property: JsonPropertyName("lineItems")] List<LineItemPayload> LineItems)
     {
         public InvoiceExtractionResult ToResult() => new(
@@ -101,6 +102,7 @@ public class InvoiceExtractionClient : IInvoiceExtractionClient
             VatAmount,
             TotalAmount,
             string.IsNullOrWhiteSpace(Currency) ? "EUR" : Currency,
+            string.IsNullOrWhiteSpace(Category) ? null : Category,
             (LineItems ?? new()).Select(l => l.ToResult()).ToList());
 
         // De AI levert de datum als ISO-string "YYYY-MM-DD" of null.

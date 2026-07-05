@@ -14,6 +14,7 @@ public sealed record InvoiceExtractionResult(
     decimal VatAmount,
     decimal TotalAmount,
     string Currency,
+    string? Category,
     IReadOnlyList<InvoiceLineResult> LineItems);
 
 /// <summary>Eén geëxtraheerde factuurlijn.</summary>

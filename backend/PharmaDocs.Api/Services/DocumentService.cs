@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using PharmaDocs.Api.Common.Exceptions;
 using PharmaDocs.Api.Common.Mapping;
@@ -96,6 +98,7 @@ public class DocumentService : IDocumentService
         invoice.VatAmount = request.VatAmount;
         invoice.TotalAmount = request.TotalAmount;
         invoice.Currency = string.IsNullOrWhiteSpace(request.Currency) ? "EUR" : request.Currency;
+        invoice.Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category;
 
         // Lijnitems volledig vervangen: eenvoudig en robuust bij toevoegen/verwijderen.
         // De oude (nu wees geworden) lijnen worden door EF verwijderd; de nieuwe
@@ -114,6 +117,58 @@ public class DocumentService : IDocumentService
 
         await _repository.SaveChangesAsync(ct);
         return document.ToDetailDto();
+    }
+
+    // Belgische notatie: komma als decimaalteken, past bij het puntkomma-scheidingsteken.
+    private static readonly CultureInfo NlBe = CultureInfo.GetCultureInfo("nl-BE");
+
+    public async Task<byte[]> ExportCsvAsync(Guid userId, CancellationToken ct = default)
+    {
+        var documents = await _repository.GetAllAsync(userId, ct);
+
+        var sb = new StringBuilder();
+        // Puntkomma als scheidingsteken → opent netjes in Excel met Belgische regio-instellingen.
+        sb.AppendLine(string.Join(';', new[]
+        {
+            "Bestand", "Leverancier", "Factuurnummer", "Factuurdatum", "Categorie",
+            "Subtotaal", "Btw-tarief", "Btw-bedrag", "Totaal", "Munt", "Status", "Geuploaded",
+        }));
+
+        foreach (var doc in documents)
+        {
+            var inv = doc.ExtractedInvoice;
+            sb.AppendLine(string.Join(';', new[]
+            {
+                Csv(doc.FileName),
+                Csv(inv?.SupplierName),
+                Csv(inv?.InvoiceNumber),
+                Csv(inv?.InvoiceDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)),
+                Csv(inv?.Category),
+                Money(inv?.SubtotalAmount),
+                inv?.VatRate is { } rate ? Csv(rate.ToString("0.##", NlBe)) : string.Empty,
+                Money(inv?.VatAmount),
+                Money(inv?.TotalAmount),
+                Csv(inv?.Currency),
+                Csv(doc.Status.ToString()),
+                Csv(doc.UploadedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)),
+            }));
+        }
+
+        // UTF-8 met BOM zodat Excel accenten (é, ë) correct toont.
+        return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+    }
+
+    private static string Money(decimal? value) =>
+        value is { } v ? v.ToString("0.00", NlBe) : string.Empty;
+
+    /// <summary>RFC 4180-escaping: velden met ; " of een regeleinde tussen quotes.</summary>
+    private static string Csv(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+        if (value.Contains(';') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        return value;
     }
 
     private static void ValidateUpload(IFormFile file)
@@ -144,6 +199,7 @@ public class DocumentService : IDocumentService
         VatAmount = extraction.VatAmount,
         TotalAmount = extraction.TotalAmount,
         Currency = extraction.Currency,
+        Category = extraction.Category,
         CreatedAt = DateTime.UtcNow,
         LineItems = extraction.LineItems.Select(l => new InvoiceLineItem
         {
