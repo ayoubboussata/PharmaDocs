@@ -10,10 +10,12 @@ name: Build en deploy naar Azure
 on:
   push:
     branches: [main]
-    # Docs-only wijzigingen hoeven geen deploy te triggeren.
+    # Docs- en infra-wijzigingen hoeven geen app-deploy te triggeren.
+    # (Infra-as-Code wordt apart uitgerold via `az deployment`, zie infra/main.bicep.)
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'infra/**'
   workflow_dispatch:
 
 # Nodig voor passwordless login via OIDC (federated credentials).

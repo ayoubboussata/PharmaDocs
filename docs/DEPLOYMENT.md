@@ -24,7 +24,9 @@ Enkel de front-end is publiek; backend en AI-service zijn **intern** (enkel bere
 
 > **Regio's.** Sommige abonnementen (o.a. *Azure for Students*) beperken de toegelaten regio's, en niet elke dienst is in elke toegelaten regio beschikbaar. Zet `LOCATION` op een toegelaten regio; staat een dienst (bv. PostgreSQL) die regio niet toe, kies dan een andere toegelaten regio voor dat onderdeel. De containers kunnen cross-region uit de registry pullen.
 
-## Uitrollen
+## Uitrollen (Infra-as-Code met Bicep)
+
+De infrastructuur staat declaratief in [`infra/main.bicep`](../infra/main.bicep) — één bestand dat álle Azure-resources beschrijft (registry, PostgreSQL + pgvector, Container Apps-omgeving, de drie apps met hun ingress/secrets/env). Het script [`infra/deploy.sh`](../infra/deploy.sh) is een **dunne wrapper** die enkel doet wat Bicep niet kan.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -33,14 +35,23 @@ export VOYAGE_API_KEY=pa-...
 bash infra/deploy.sh
 ```
 
-Het script (zie [`infra/deploy.sh`](../infra/deploy.sh)):
+De wrapper:
 
-1. maakt de resource group, Container Registry en bouwt de drie images in de cloud (`az acr build` — geen lokale Docker nodig);
-2. maakt de PostgreSQL Flexible Server en zet `azure.extensions = VECTOR` (nodig voor `CREATE EXTENSION vector`);
-3. maakt de Container Apps-omgeving en de drie apps, met de sleutels en de DB-connectiestring als **secrets**;
-4. koppelt de interne URL's (front-end → backend → AI-service) automatisch.
+1. registreert de resource-providers en maakt de resource group;
+2. **bootstrapt de Container Registry** (moet bestaan vóór je kunt pushen) en **bouwt + pusht de drie images lokaal** met Docker (`az acr build` is op *Azure for Students* niet beschikbaar);
+3. rolt `main.bicep` uit via `az deployment group create` — dat maakt PostgreSQL (met `azure.extensions = VECTOR`), de Container Apps-omgeving en de drie apps, met de sleutels + DB-connectiestring als **secrets**;
+4. leest de outputs uit (publieke URL, admin-login) en bewaart ze in `infra/.deploy-secrets`.
 
-Op het einde print het de publieke URL. De backend past de EF Core-migraties automatisch toe bij het opstarten.
+De interne URL's (front-end → backend → AI-service) koppelt Bicep zelf via resource-referenties (`aiApp.properties.configuration.ingress.fqdn`), geen handmatige stappen nodig. De backend past de EF Core-migraties automatisch toe bij het opstarten.
+
+> **Waarom Bicep i.p.v. pure `az`-commando's:** de volledige infra is nu versioneerbaar, herhaalbaar en te previewen met `az deployment group what-if` vóór je iets wijzigt. De ACR staat ook in de template (idempotent), zodat de infra volledig als code beschreven is; de bootstrap in de wrapper is enkel nodig omdat images niet naar een onbestaande registry gepusht kunnen worden.
+>
+> **Alleen de infra opnieuw uitrollen** (zonder images te herbouwen), bv. na een `main.bicep`-wijziging:
+> ```bash
+> az deployment group create -g rg-pharmadocs --template-file infra/main.bicep \
+>   --parameters acrName=<acr> pgServerName=<pg> imageTag=<tag> \
+>   anthropicApiKey=... voyageApiKey=... pgAdminPassword=... jwtKey=... adminPassword=...
+> ```
 
 ## Configuratie in productie
 
