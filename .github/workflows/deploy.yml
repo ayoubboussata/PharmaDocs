@@ -17,6 +17,12 @@ permissions:
   id-token: write
   contents: read
 
+# Eén deploy tegelijk per branch; een nieuwe push annuleert een lopende run,
+# zodat twee deploys elkaars revisie niet overschrijven.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   AZURE_RG: rg-pharmadocs
   ACR_NAME: crpharmadocse767d1
