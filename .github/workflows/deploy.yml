@@ -16,6 +16,7 @@ on:
       - '**.md'
       - 'docs/**'
       - 'infra/**'
+      - 'scripts/**'
   workflow_dispatch:
 
 # Nodig voor passwordless login via OIDC (federated credentials).

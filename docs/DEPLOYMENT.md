@@ -68,12 +68,21 @@ De .NET-config leest deze omgevingsvariabelen automatisch (`__` = geneste sectie
 
 ## Kosten drukken
 
-- Container Apps staan op `min-replicas 0` → schalen naar nul bij inactiviteit.
-- De grootste vaste kost is PostgreSQL. Tussen demo's:
-  ```bash
-  az postgres flexible-server stop  -g rg-pharmadocs -n <pg-naam>
-  az postgres flexible-server start -g rg-pharmadocs -n <pg-naam>
-  ```
+- Container Apps staan op `min-replicas 0` → schalen naar nul bij inactiviteit (~5 min). De eerste bezoeker daarna krijgt een korte **cold start**; warm de site op vóór een demo.
+- De grootste vaste kost is PostgreSQL. Pauzeer ze tussen demo's.
+
+Twee hulpscripts automatiseren dit (ze lezen de servernaam uit `infra/.deploy-secrets`):
+
+```bash
+bash scripts/demo-up.sh     # start de DB + warmt de front-end op → klaar om te tonen
+bash scripts/demo-down.sh   # pauzeert de DB weer (containers schalen zelf naar nul)
+```
+
+Handmatig kan ook:
+```bash
+az postgres flexible-server stop  -g rg-pharmadocs -n <pg-naam>
+az postgres flexible-server start -g rg-pharmadocs -n <pg-naam>
+```
 
 ## De database afschermen (productie)
 
