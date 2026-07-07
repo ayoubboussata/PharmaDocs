@@ -74,9 +74,20 @@ De .NET-config leest deze omgevingsvariabelen automatisch (`__` = geneste sectie
 Twee hulpscripts automatiseren dit (ze lezen de servernaam uit `infra/.deploy-secrets`):
 
 ```bash
+# macOS / Linux / Git Bash
 bash scripts/demo-up.sh     # start de DB + warmt de front-end op → klaar om te tonen
 bash scripts/demo-down.sh   # pauzeert de DB weer (containers schalen zelf naar nul)
 ```
+
+```powershell
+# Windows / PowerShell (bash niet nodig)
+.\scripts\demo-up.ps1
+.\scripts\demo-down.ps1
+```
+
+> Blokkeert PowerShell het script (execution policy)? Draai eenmalig in die sessie:
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, of gebruik
+> `powershell -ExecutionPolicy Bypass -File scripts\demo-up.ps1`.
 
 Handmatig kan ook:
 ```bash
