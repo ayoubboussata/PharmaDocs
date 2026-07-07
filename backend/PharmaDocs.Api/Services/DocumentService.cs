@@ -64,6 +64,16 @@ public class DocumentService : IDocumentService
             await using var stream = file.OpenReadStream();
             var extraction = await _extractionClient.ExtractAsync(stream, file.FileName, file.ContentType, ct);
 
+            // Enkel echte facturen/bestelbonnen: is het iets anders (attest, brief, …),
+            // dan weigeren we de upload en bewaren we géén bogus record.
+            if (!extraction.IsInvoice)
+            {
+                _logger.LogInformation("Upload {DocumentId} geweigerd: geen factuur.", document.Id);
+                await _repository.DeleteAsync(document, ct);
+                throw new UnprocessableEntityException(
+                    "Dit document lijkt geen factuur of bestelbon te zijn. Enkel facturen worden verwerkt.");
+            }
+
             document.ExtractedInvoice = BuildInvoice(document.Id, extraction);
             document.Status = DocumentStatus.Processed;
             document.ErrorMessage = null;

@@ -56,6 +56,15 @@ INVOICE_TOOL = {
             },
             "totalAmount": {"type": "number"},
             "currency": {"type": "string"},
+            "isInvoice": {
+                "type": "boolean",
+                "description": (
+                    "true als dit document een echte factuur of bestelbon is; "
+                    "false bij een ander documenttype (attest, brief, folder, "
+                    "contract, ...). Wees streng: enkel commerciële/financiële "
+                    "aankoopdocumenten zijn facturen."
+                ),
+            },
             "category": {
                 "type": "string",
                 "enum": [
@@ -97,6 +106,7 @@ INVOICE_TOOL = {
             "vatAmount",
             "totalAmount",
             "currency",
+            "isInvoice",
             "category",
             "lineItems",
         ],

@@ -176,7 +176,7 @@ export function DocumentsPage() {
         )}
 
         {!loading && !error && filtered.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+          <div className="overflow-x-auto rounded-2xl border border-line bg-surface shadow-card">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs uppercase tracking-wide text-subtle">
@@ -199,12 +199,18 @@ export function DocumentsPage() {
                       onClick={() => navigate(`/documents/${doc.id}`)}
                       className="group cursor-pointer border-b border-line last:border-0 transition-colors hover:bg-elevated"
                     >
-                      <td className="px-4 py-3 font-medium text-fg">{doc.fileName}</td>
-                      <td className="px-4 py-3 text-muted">{doc.supplierName ?? '—'}</td>
+                      <td className="px-4 py-3 font-medium text-fg">
+                        <div className="max-w-[16ch] truncate" title={doc.fileName}>{doc.fileName}</div>
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        <div className="max-w-[18ch] truncate" title={doc.supplierName ?? ''}>{doc.supplierName ?? '—'}</div>
+                      </td>
                       <td className="px-4 py-3">
                         {doc.category ? <Badge tone="accent">{doc.category}</Badge> : <span className="text-subtle">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-muted">{doc.invoiceNumber ?? '—'}</td>
+                      <td className="px-4 py-3 text-muted">
+                        <div className="max-w-[16ch] truncate" title={doc.invoiceNumber ?? ''}>{doc.invoiceNumber ?? '—'}</div>
+                      </td>
                       <td className="px-4 py-3 text-muted">{formatDate(doc.invoiceDate)}</td>
                       <td className="px-4 py-3 tabular-nums text-fg">
                         {formatAmount(doc.totalAmount, doc.currency)}

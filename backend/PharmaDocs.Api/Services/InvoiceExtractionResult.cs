@@ -6,6 +6,7 @@ namespace PharmaDocs.Api.Services;
 /// wire-DTO's zodat de rest van de backend niet met de HTTP-vorm hoeft te werken.
 /// </summary>
 public sealed record InvoiceExtractionResult(
+    bool IsInvoice,
     string SupplierName,
     string InvoiceNumber,
     DateOnly? InvoiceDate,

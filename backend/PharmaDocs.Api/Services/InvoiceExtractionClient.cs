@@ -90,10 +90,12 @@ public class InvoiceExtractionClient : IInvoiceExtractionClient
         [property: JsonPropertyName("vatAmount")] decimal VatAmount,
         [property: JsonPropertyName("totalAmount")] decimal TotalAmount,
         [property: JsonPropertyName("currency")] string Currency,
+        [property: JsonPropertyName("isInvoice")] bool IsInvoice,
         [property: JsonPropertyName("category")] string? Category,
         [property: JsonPropertyName("lineItems")] List<LineItemPayload> LineItems)
     {
         public InvoiceExtractionResult ToResult() => new(
+            IsInvoice,
             SupplierName,
             InvoiceNumber,
             ParseDate(InvoiceDate),
