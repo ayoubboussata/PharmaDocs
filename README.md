@@ -4,11 +4,14 @@
 
 **AI-gedreven documentverwerking & interne kennisassistent voor apotheken**
 
+[![CI/CD](https://github.com/ayoubboussata/PharmaDocs/actions/workflows/deploy.yml/badge.svg)](https://github.com/ayoubboussata/PharmaDocs/actions/workflows/deploy.yml)
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20%2B%20pgvector-4169E1)
 ![Python](https://img.shields.io/badge/Python-FastAPI-009688)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB)
 ![License](https://img.shields.io/badge/license-MIT-green)
+
+**[🔗 Live demo](https://pharmadocs-web.nicecliff-6142efb0.swedencentral.azurecontainerapps.io)** — draait 24/7 op Azure · toegang op aanvraag (registratie is admin-only)
 
 </div>
 
