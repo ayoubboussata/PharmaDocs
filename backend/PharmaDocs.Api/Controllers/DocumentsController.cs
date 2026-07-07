@@ -59,13 +59,26 @@ public class DocumentsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
     }
 
-    /// <summary>Exporteert alle facturen van de gebruiker als CSV (opent in Excel).</summary>
-    [HttpGet("export")]
+    /// <summary>
+    /// Exporteert facturen als CSV (opent in Excel). Met een lijst <c>ids</c> in de
+    /// body exporteer je enkel die documenten; zonder (of leeg) exporteer je alles.
+    /// </summary>
+    [HttpPost("export")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> Export(CancellationToken ct)
+    public async Task<IActionResult> Export([FromBody] ExportInvoicesRequest? request, CancellationToken ct)
     {
-        var csv = await _service.ExportCsvAsync(User.GetUserId(), ct);
+        var csv = await _service.ExportCsvAsync(User.GetUserId(), request?.Ids, ct);
         return File(csv, "text/csv", $"pharmadocs-facturen-{DateTime.UtcNow:yyyy-MM-dd}.csv");
+    }
+
+    /// <summary>Verwijdert een document van de gebruiker (incl. de extractie via cascade).</summary>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var deleted = await _service.DeleteAsync(id, User.GetUserId(), ct);
+        return deleted ? NoContent() : NotFound();
     }
 
     /// <summary>

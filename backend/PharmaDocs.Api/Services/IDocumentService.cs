@@ -26,8 +26,15 @@ public interface IDocumentService
     Task<DocumentDetailDto?> UpdateInvoiceAsync(Guid id, Guid userId, UpdateInvoiceRequest request, CancellationToken ct = default);
 
     /// <summary>
-    /// Bouwt een CSV-export (UTF-8 met BOM, één rij per document) van alle facturen
-    /// van <paramref name="userId"/>, klaar om in Excel te openen.
+    /// Bouwt een CSV-export (UTF-8 met BOM, één rij per document) klaar om in Excel
+    /// te openen. Zijn er <paramref name="ids"/> meegegeven, dan enkel die documenten;
+    /// anders alle facturen van <paramref name="userId"/>.
     /// </summary>
-    Task<byte[]> ExportCsvAsync(Guid userId, CancellationToken ct = default);
+    Task<byte[]> ExportCsvAsync(Guid userId, IReadOnlyCollection<Guid>? ids, CancellationToken ct = default);
+
+    /// <summary>
+    /// Verwijdert een document van de gebruiker. Geeft <c>false</c> als het niet
+    /// bestaat of niet van deze gebruiker is (eigenaarschapscheck).
+    /// </summary>
+    Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken ct = default);
 }
