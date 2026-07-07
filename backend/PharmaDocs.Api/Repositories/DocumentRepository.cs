@@ -46,5 +46,11 @@ public class DocumentRepository : IDocumentRepository
         await _db.SaveChangesAsync(ct);
     }
 
+    public async Task DeleteAsync(Document document, CancellationToken ct = default)
+    {
+        _db.Documents.Remove(document);
+        await _db.SaveChangesAsync(ct);
+    }
+
     public Task SaveChangesAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 }

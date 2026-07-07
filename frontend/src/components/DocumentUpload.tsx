@@ -41,7 +41,11 @@ export function DocumentUpload({ onUploaded }: DocumentUploadProps) {
       const status = err instanceof AxiosError ? err.response?.status : undefined
       if (status === 415) setError('Enkel PDF-bestanden worden ondersteund.')
       else if (status === 413) setError('Bestand te groot (max. 10 MB).')
-      else if (status === 400) setError('Geen geldig bestand ontvangen.')
+      else if (status === 422) {
+        // Geen factuur: toon de specifieke boodschap van de server.
+        const detail = (err as AxiosError<{ detail?: string }>).response?.data?.detail
+        setError(detail ?? 'Dit document is geen factuur.')
+      } else if (status === 400) setError('Geen geldig bestand ontvangen.')
       else setError('Uploaden mislukte. Probeer het opnieuw.')
     } finally {
       setUploading(false)

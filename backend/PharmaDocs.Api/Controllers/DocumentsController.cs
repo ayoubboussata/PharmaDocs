@@ -50,6 +50,7 @@ public class DocumentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
     [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)] // geen factuur herkend
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<ActionResult<DocumentDetailDto>> Upload(IFormFile file, CancellationToken ct)

@@ -26,6 +26,9 @@ public interface IDocumentRepository
     /// <summary>Voegt een nieuw document toe en bewaart meteen.</summary>
     Task AddAsync(Document document, CancellationToken ct = default);
 
+    /// <summary>Verwijdert een document (en via cascade de extractie) en bewaart meteen.</summary>
+    Task DeleteAsync(Document document, CancellationToken ct = default);
+
     /// <summary>Bewaart openstaande wijzigingen (bv. na het toevoegen van de extractie).</summary>
     Task SaveChangesAsync(CancellationToken ct = default);
 }
