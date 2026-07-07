@@ -35,8 +35,21 @@ env:
   ACR_NAME: crpharmadocse767d1
 
 jobs:
+  # ── 0) Backend-tests: moeten slagen vóór we bouwen/deployen ───────────────
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Backend-tests (xUnit)
+        run: dotnet test backend/PharmaDocs.Tests/PharmaDocs.Tests.csproj --configuration Release
+
   # ── 1) De drie images parallel bouwen en pushen ──────────────────────────
   build-and-push:
+    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
