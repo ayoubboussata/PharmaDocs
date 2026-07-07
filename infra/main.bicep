@@ -208,7 +208,9 @@ resource aiApp 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Altijd minstens 1 replica warm → geen cold start (24/7 direct beschikbaar).
+        // Zet op 0 om naar nul te schalen bij inactiviteit (goedkoper, wel cold start).
+        minReplicas: 1
         maxReplicas: 2
       }
     }
@@ -288,7 +290,9 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Altijd minstens 1 replica warm → geen cold start (24/7 direct beschikbaar).
+        // Zet op 0 om naar nul te schalen bij inactiviteit (goedkoper, wel cold start).
+        minReplicas: 1
         maxReplicas: 2
       }
     }
@@ -335,7 +339,9 @@ resource webApp 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Altijd minstens 1 replica warm → geen cold start (24/7 direct beschikbaar).
+        // Zet op 0 om naar nul te schalen bij inactiviteit (goedkoper, wel cold start).
+        minReplicas: 1
         maxReplicas: 2
       }
     }

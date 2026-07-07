@@ -66,12 +66,16 @@ De interne URL's (front-end → backend → AI-service) koppelt Bicep zelf via r
 
 De .NET-config leest deze omgevingsvariabelen automatisch (`__` = geneste sectie); er staan **geen** sleutels in de images of in Git.
 
-## Kosten drukken
+## Beschikbaarheid vs. kosten
 
-- Container Apps staan op `min-replicas 0` → schalen naar nul bij inactiviteit (~5 min). De eerste bezoeker daarna krijgt een korte **cold start**; warm de site op vóór een demo.
-- De grootste vaste kost is PostgreSQL. Pauzeer ze tussen demo's.
+Twee knoppen bepalen de afweging:
 
-Twee hulpscripts automatiseren dit (ze lezen de servernaam uit `infra/.deploy-secrets`):
+- **Container Apps `minReplicas`** — op **1** (huidige keuze in `main.bicep`) blijft er altijd één replica warm → **geen cold start**, 24/7 direct beschikbaar. Op **0** schalen ze naar nul bij inactiviteit (~5 min) → goedkoper, maar de eerste bezoeker daarna krijgt een korte cold start.
+- **PostgreSQL** — de grootste vaste kost. Je kunt ze pauzeren tussen demo's (goedkoop, maar de start vanuit `Stopped` duurt op het Burstable-tier **variabel/soms lang**), of gewoon **aan laten** tijdens een actieve periode (betrouwbaar, ~€15/maand).
+
+> Voor een sollicitatieperiode: alles aan laten = altijd meteen live. Voor lange inactieve periodes: DB pauzeren en `minReplicas` op 0 zetten.
+
+De hulpscripts pauzeren/hervatten de DB (ze lezen de servernaam uit `infra/.deploy-secrets`):
 
 ```bash
 # macOS / Linux / Git Bash
