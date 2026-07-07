@@ -132,9 +132,17 @@ public class DocumentService : IDocumentService
     // Belgische notatie: komma als decimaalteken, past bij het puntkomma-scheidingsteken.
     private static readonly CultureInfo NlBe = CultureInfo.GetCultureInfo("nl-BE");
 
-    public async Task<byte[]> ExportCsvAsync(Guid userId, CancellationToken ct = default)
+    public async Task<byte[]> ExportCsvAsync(
+        Guid userId, IReadOnlyCollection<Guid>? ids, CancellationToken ct = default)
     {
         var documents = await _repository.GetAllAsync(userId, ct);
+
+        // Selectie: enkel de gekozen documenten (indien meegegeven).
+        if (ids is { Count: > 0 })
+        {
+            var wanted = ids.ToHashSet();
+            documents = documents.Where(d => wanted.Contains(d.Id)).ToList();
+        }
 
         var sb = new StringBuilder();
         // Puntkomma als scheidingsteken → opent netjes in Excel met Belgische regio-instellingen.
@@ -166,6 +174,16 @@ public class DocumentService : IDocumentService
 
         // UTF-8 met BOM zodat Excel accenten (é, ë) correct toont.
         return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken ct = default)
+    {
+        // Eigenaarschapscheck zit in de query: een vreemd document geeft null → false → 404.
+        var document = await _repository.GetTrackedByIdAsync(id, userId, ct);
+        if (document is null)
+            return false;
+        await _repository.DeleteAsync(document, ct);
+        return true;
     }
 
     private static string Money(decimal? value) =>
