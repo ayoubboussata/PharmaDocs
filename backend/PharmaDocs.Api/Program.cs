@@ -112,21 +112,17 @@ if (string.IsNullOrWhiteSpace(aiSettings.BaseUrl))
 builder.Services.Configure<AiServiceSettings>(builder.Configuration.GetSection(AiServiceSettings.SectionName));
 
 // Typed HttpClients: de backend is de enige die de AI-service aanroept (orchestrator).
-builder.Services.AddHttpClient<IInvoiceExtractionClient, InvoiceExtractionClient>(client =>
+// Gedeelde config incl. het optionele interne geheim (L4, defense-in-depth).
+void ConfigureAiClient(HttpClient client)
 {
     client.BaseAddress = new Uri(aiSettings.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
-});
-builder.Services.AddHttpClient<IEmbeddingClient, EmbeddingClient>(client =>
-{
-    client.BaseAddress = new Uri(aiSettings.BaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
-});
-builder.Services.AddHttpClient<IRagAnswerClient, RagAnswerClient>(client =>
-{
-    client.BaseAddress = new Uri(aiSettings.BaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(aiSettings.TimeoutSeconds);
-});
+    if (!string.IsNullOrWhiteSpace(aiSettings.InternalKey))
+        client.DefaultRequestHeaders.Add("X-Internal-Key", aiSettings.InternalKey);
+}
+builder.Services.AddHttpClient<IInvoiceExtractionClient, InvoiceExtractionClient>(ConfigureAiClient);
+builder.Services.AddHttpClient<IEmbeddingClient, EmbeddingClient>(ConfigureAiClient);
+builder.Services.AddHttpClient<IRagAnswerClient, RagAnswerClient>(ConfigureAiClient);
 
 // --- Dependency injection: gelaagde structuur ---
 builder.Services.AddScoped<IUserRepository, UserRepository>();

@@ -23,6 +23,10 @@ class Settings:
         self.voyage_model: str = os.getenv("VOYAGE_MODEL", "voyage-3.5")
         self.embedding_dimension: int = 1024
 
+        # Gedeeld intern geheim (L4, defense-in-depth): als het gezet is, moet elke
+        # aanroep de juiste X-Internal-Key meesturen. Niet gezet = niet afgedwongen.
+        self.internal_api_key: str | None = os.getenv("INTERNAL_API_KEY")
+
     @property
     def ai_enabled(self) -> bool:
         """True als er een Claude-sleutel is; anders draait enkel de tekstextractie."""

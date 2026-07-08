@@ -16,7 +16,7 @@ public record UpdateInvoiceRequest(
     [Range(0, 9_999_999)] decimal TotalAmount,
     [Required, MaxLength(8)] string Currency,
     [MaxLength(50)] string? Category,
-    List<UpdateLineItemRequest> LineItems);
+    [MaxLength(500, ErrorMessage = "Te veel lijnitems (max. 500).")] List<UpdateLineItemRequest> LineItems);
 
 /// <summary>Eén te bewaren factuurlijn.</summary>
 public record UpdateLineItemRequest(

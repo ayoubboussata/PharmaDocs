@@ -13,7 +13,7 @@ from __future__ import annotations
 import io
 
 import pdfplumber
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from .config import get_settings
@@ -28,6 +28,17 @@ app = FastAPI(
 )
 
 MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+def require_internal_key(x_internal_key: str | None = Header(default=None)) -> None:
+    """
+    Defense-in-depth (L4): als er een intern geheim is ingesteld, moet elke aanroep
+    de juiste X-Internal-Key meesturen. Niet ingesteld = niet afgedwongen (dev).
+    De backend is normaal de enige beller (interne ingress); dit is een extra laag.
+    """
+    expected = get_settings().internal_api_key
+    if expected and x_internal_key != expected:
+        raise HTTPException(status_code=401, detail="Ongeldige of ontbrekende interne sleutel.")
 
 
 @app.get("/health")
@@ -81,7 +92,7 @@ async def _read_pdf(file: UploadFile) -> tuple[str, int]:
     return text, page_count
 
 
-@app.post("/extract")
+@app.post("/extract", dependencies=[Depends(require_internal_key)])
 async def extract(file: UploadFile = File(...)) -> dict[str, object]:
     """Ontvangt een PDF en geeft de geëxtraheerde ruwe tekst terug."""
     text, page_count = await _read_pdf(file)
@@ -93,7 +104,7 @@ async def extract(file: UploadFile = File(...)) -> dict[str, object]:
     }
 
 
-@app.post("/extract-invoice")
+@app.post("/extract-invoice", dependencies=[Depends(require_internal_key)])
 async def extract_invoice_endpoint(file: UploadFile = File(...)) -> dict[str, object]:
     """PDF -> tekst -> Claude -> gestructureerde factuur-JSON."""
     text, page_count = await _read_pdf(file)
@@ -111,7 +122,7 @@ async def extract_invoice_endpoint(file: UploadFile = File(...)) -> dict[str, ob
     }
 
 
-@app.post("/embed-document")
+@app.post("/embed-document", dependencies=[Depends(require_internal_key)])
 async def embed_document(file: UploadFile = File(...)) -> dict[str, object]:
     """
     PDF -> tekst -> chunks -> embeddings (Voyage). Geeft de stukken met hun
@@ -142,7 +153,7 @@ class EmbedQueryRequest(BaseModel):
     text: str
 
 
-@app.post("/embed-query")
+@app.post("/embed-query", dependencies=[Depends(require_internal_key)])
 def embed_query(req: EmbedQueryRequest) -> dict[str, object]:
     """Embedt één vraag (input_type=query) voor de vectorzoektocht in de backend."""
     try:
@@ -162,7 +173,7 @@ class AnswerRequest(BaseModel):
     contexts: list[AnswerContext] = []
 
 
-@app.post("/answer")
+@app.post("/answer", dependencies=[Depends(require_internal_key)])
 def answer(req: AnswerRequest) -> dict[str, object]:
     """Genereert een gegrond antwoord op basis van de meegestuurde fragmenten (Claude)."""
     try:
