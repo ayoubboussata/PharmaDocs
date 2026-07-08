@@ -13,4 +13,10 @@ public class AiServiceSettings
 
     /// <summary>Time-out (seconden) voor een extractie-call; Claude kan traag zijn.</summary>
     public int TimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Gedeeld intern geheim (L4, defense-in-depth): wordt als <c>X-Internal-Key</c>
+    /// naar de AI-service gestuurd. Optioneel — leeg = header niet meesturen.
+    /// </summary>
+    public string? InternalKey { get; set; }
 }

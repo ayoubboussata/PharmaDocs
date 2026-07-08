@@ -13,6 +13,7 @@ namespace PharmaDocs.Api.Services;
 public class DocumentService : IDocumentService
 {
     private const long MaxBytes = 10 * 1024 * 1024; // 10 MB, gelijk aan de AI-service
+    private const int MaxLineItems = 500;            // bovengrens per factuur (L5)
 
     private readonly IDocumentRepository _repository;
     private readonly IInvoiceExtractionClient _extractionClient;
@@ -222,6 +223,14 @@ public class DocumentService : IDocumentService
             || file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
         if (!isPdf)
             throw new UnsupportedMediaTypeException("Enkel PDF-bestanden worden ondersteund.");
+
+        // Magic bytes (L5): een echt PDF begint met "%PDF". Weert een niet-PDF met
+        // een misleidende .pdf-naam of octet-stream-type.
+        Span<byte> header = stackalloc byte[4];
+        using var probe = file.OpenReadStream();
+        var read = probe.ReadAtLeast(header, 4, throwOnEndOfStream: false);
+        if (read < 4 || header[0] != 0x25 || header[1] != 0x50 || header[2] != 0x44 || header[3] != 0x46)
+            throw new UnsupportedMediaTypeException("Het bestand is geen geldig PDF (ontbrekende %PDF-header).");
     }
 
     // Sleutels (Id) bewust niet zelf zetten: het zijn nieuwe entiteiten die via de
@@ -240,7 +249,8 @@ public class DocumentService : IDocumentService
         Currency = extraction.Currency,
         Category = extraction.Category,
         CreatedAt = DateTime.UtcNow,
-        LineItems = extraction.LineItems.Select(l => new InvoiceLineItem
+        // Defensieve bovengrens op het aantal lijnitems (L5).
+        LineItems = extraction.LineItems.Take(MaxLineItems).Select(l => new InvoiceLineItem
         {
             Description = l.Description,
             Quantity = l.Quantity,

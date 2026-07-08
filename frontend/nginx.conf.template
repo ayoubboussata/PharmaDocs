@@ -4,6 +4,16 @@ server {
     listen 80;
     server_name _;
 
+    # Security-headers (L3). Gelden voor alle responses: geen enkele location
+    # zet een eigen add_header, dus deze worden overgeërfd.
+    # CSP: alles 'self'; scripts strikt (thema-init is nu een extern bestand),
+    # inline styles toegelaten (React style-props + Tailwind), fonts via Google Fonts.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
     # Statische SPA-bestanden; onbekende paden vallen terug op index.html (client-side routing).
     location / {
         root /usr/share/nginx/html;

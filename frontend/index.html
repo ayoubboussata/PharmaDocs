@@ -11,18 +11,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script>
-      // Zet het thema vóór de eerste paint zodat er geen lichtflits is bij dark mode.
-      (function () {
-        try {
-          var saved = localStorage.getItem('pharmadocs.theme')
-          var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-          document.documentElement.setAttribute('data-theme', theme)
-        } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'light')
-        }
-      })()
-    </script>
+    <!-- Extern (niet inline) zodat de CSP zonder 'unsafe-inline' voor scripts kan. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
