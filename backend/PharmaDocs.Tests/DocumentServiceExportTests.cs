@@ -53,6 +53,19 @@ public class DocumentServiceExportTests
     }
 
     [Fact]
+    public async Task Export_neutraliseert_formule_injectie_in_een_tekstveld()
+    {
+        // Leveranciersnaam komt uit AI-extractie van een geüploade PDF: niet te
+        // vertrouwen. Een waarde die met '=' begint mag niet als Excel-formule draaien.
+        var service = BuildService(new[] { TestData.Doc("=1+2", "F-9", 10m, 2m, 12m) });
+
+        var csv = Encoding.UTF8.GetString(await service.ExportCsvAsync(Guid.NewGuid(), null));
+
+        Assert.Contains("'=1+2", csv);           // geprefixt met een apostrof
+        Assert.DoesNotContain(";=1+2;", csv);    // niet als kale formule aanwezig
+    }
+
+    [Fact]
     public async Task Export_met_ids_neemt_enkel_de_selectie_mee()
     {
         var acme = TestData.Doc("Acme", "F-1", 100m, 21m, 121m);

@@ -120,7 +120,7 @@ De front-end draait op `http://localhost:5173`, de API op `http://localhost:5035
 
 | Methode | Route | Auth | Omschrijving |
 | --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | — | Account aanmaken, geeft een JWT terug |
+| `POST` | `/api/auth/register` | 🔒 Admin | Account aanmaken (admin-only) — geeft het nieuwe account terug, géén token |
 | `POST` | `/api/auth/login` | — | Inloggen, geeft een JWT terug |
 | `POST` | `/api/documents/upload` | 🔒 | Factuur-PDF uploaden → interne AI-extractie → opgeslagen document |
 | `GET` | `/api/documents` | 🔒 | Overzicht van verwerkte documenten |
@@ -132,7 +132,7 @@ De front-end draait op `http://localhost:5173`, de API op `http://localhost:5035
 
 ## Deployment (Azure)
 
-De drie diensten zijn gecontaineriseerd en draaien op **Azure Container Apps**, met een beheerde **Azure Database for PostgreSQL** (pgvector). Enkel de front-end is publiek; de backend en AI-service hebben **interne ingress** en zijn dus niet rechtstreeks vanaf het internet bereikbaar. TLS wordt aan de ingress geregeld en de diensten schalen naar nul bij inactiviteit.
+De drie diensten zijn gecontaineriseerd en draaien op **Azure Container Apps**, met een beheerde **Azure Database for PostgreSQL** (pgvector). Enkel de front-end is publiek; de backend en AI-service hebben **interne ingress** en zijn dus niet rechtstreeks vanaf het internet bereikbaar. TLS wordt aan de ingress geregeld. De diensten draaien standaard met minstens één warme replica (geen cold start); via `minReplicas: 0` in `infra/main.bicep` kunnen ze naar nul schalen bij inactiviteit.
 
 Uitrollen gebeurt met één script — zie **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**:
 

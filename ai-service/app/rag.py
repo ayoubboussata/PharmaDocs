@@ -8,22 +8,12 @@ die fragmenten steunt, met bronvermelding. Systeemprompt: prompts/rag_answer.md.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import anthropic
 
 from .config import get_settings
+from .prompt_loader import load_system_prompt
 
-_PROMPT_FILE = Path(__file__).resolve().parent.parent / "prompts" / "rag_answer.md"
-
-
-def _load_system_prompt() -> str:
-    raw = _PROMPT_FILE.read_text(encoding="utf-8")
-    marker = "\n---\n"
-    return raw.split(marker, 1)[1].strip() if marker in raw else raw.strip()
-
-
-SYSTEM_PROMPT = _load_system_prompt()
+SYSTEM_PROMPT = load_system_prompt("rag_answer.md")
 
 
 class AnswerError(Exception):

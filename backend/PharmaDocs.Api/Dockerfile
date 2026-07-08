@@ -18,4 +18,8 @@ COPY --from=build /app ./
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 
+# Niet als root draaien: de .NET-image bevat een non-root gebruiker 'app'.
+# Poort 8080 (> 1024) is zonder rootrechten te binden.
+USER app
+
 ENTRYPOINT ["dotnet", "PharmaDocs.Api.dll"]

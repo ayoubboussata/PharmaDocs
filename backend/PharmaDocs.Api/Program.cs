@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -91,6 +92,11 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Er zit precies één ingress-proxy voor de container: vertrouw enkel de laatste
+    // hop. Zonder deze limiet zou een client een eigen X-Forwarded-For kunnen
+    // meesturen en zo zijn per-IP-rate-limit-partitie (o.a. de brute-force-rem op
+    // login) omzeilen.
+    options.ForwardLimit = 1;
     // De ingress is het enige pad naar de container; proxy-IP's zijn dynamisch.
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
@@ -134,6 +140,28 @@ builder.Services.AddScoped<IKnowledgeService, KnowledgeService>();
 
 // --- Web API ---
 builder.Services.AddControllers();
+
+// Modelvalidatiefouten in hetzelfde { status, detail }-formaat als de rest van de API
+// (ExceptionHandlingMiddleware + de rate limiter), i.p.v. het afwijkende
+// ValidationProblemDetails-formaat. Zo heeft de client één foutcontract.
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var detail = context.ModelState
+            .SelectMany(kvp => kvp.Value!.Errors)
+            .Select(e => e.ErrorMessage)
+            .FirstOrDefault(m => !string.IsNullOrWhiteSpace(m))
+            ?? "Ongeldige invoer.";
+
+        return new BadRequestObjectResult(new
+        {
+            status = StatusCodes.Status400BadRequest,
+            detail,
+        });
+    };
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
