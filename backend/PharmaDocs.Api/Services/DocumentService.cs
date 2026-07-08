@@ -189,11 +189,22 @@ public class DocumentService : IDocumentService
     private static string Money(decimal? value) =>
         value is { } v ? v.ToString("0.00", NlBe) : string.Empty;
 
-    /// <summary>RFC 4180-escaping: velden met ; " of een regeleinde tussen quotes.</summary>
+    /// <summary>
+    /// RFC 4180-escaping (velden met ; " of een regeleinde tussen quotes) plus
+    /// bescherming tegen CSV-formule-injectie.
+    /// </summary>
     private static string Csv(string? value)
     {
         if (string.IsNullOrEmpty(value))
             return string.Empty;
+
+        // Formule-injectie: Excel/Sheets voert een cel uit als formule wanneer die
+        // met = + - @ (of een tab/CR) begint. De tekstvelden komen uit AI-extractie
+        // van een geüploade PDF (dus niet te vertrouwen) → onschadelijk maken met een
+        // voorafgaande apostrof.
+        if (value[0] is '=' or '+' or '-' or '@' or '\t' or '\r')
+            value = "'" + value;
+
         if (value.Contains(';') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
             return $"\"{value.Replace("\"", "\"\"")}\"";
         return value;

@@ -8,24 +8,13 @@ De systeemprompt staat in prompts/invoice_extraction.md (versioneerbaar).
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import anthropic
 
 from .config import get_settings
+from .prompt_loader import load_system_prompt
 
 # --- Systeemprompt inladen (het gedeelte onder de scheidingslijn) ---
-_PROMPT_FILE = Path(__file__).resolve().parent.parent / "prompts" / "invoice_extraction.md"
-
-
-def _load_system_prompt() -> str:
-    raw = _PROMPT_FILE.read_text(encoding="utf-8")
-    # Alles na de eerste horizontale lijn '---' is de eigenlijke prompt.
-    marker = "\n---\n"
-    return raw.split(marker, 1)[1].strip() if marker in raw else raw.strip()
-
-
-SYSTEM_PROMPT = _load_system_prompt()
+SYSTEM_PROMPT = load_system_prompt("invoice_extraction.md")
 
 # --- Strikt JSON-schema voor het tool-argument (matcht de .NET ExtractedInvoice) ---
 INVOICE_TOOL = {
