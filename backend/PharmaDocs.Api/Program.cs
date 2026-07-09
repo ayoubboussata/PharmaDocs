@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PharmaDocs.Api.Configuration;
+using PharmaDocs.Api.Controllers;
 using PharmaDocs.Api.Data;
 using PharmaDocs.Api.Middleware;
 using PharmaDocs.Api.Repositories;
@@ -51,6 +52,21 @@ builder.Services
             ClockSkew = TimeSpan.FromSeconds(30),
             // De rol zit in de "role"-claim (niet de lange URI); zo werkt [Authorize(Roles = ...)].
             RoleClaimType = "role"
+        };
+
+        // L1: lees het token uit de httpOnly-cookie als er geen Authorization-header is.
+        // Zo werkt [Authorize] met de cookie; de header blijft werken (bv. Swagger).
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (string.IsNullOrEmpty(context.Token) &&
+                    context.Request.Cookies.TryGetValue(AuthController.AuthCookie, out var cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 

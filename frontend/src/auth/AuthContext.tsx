@@ -1,56 +1,64 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { api, tokenStorage } from '../api/client'
-import type { AuthResponse } from '../types'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { api } from '../api/client'
+import type { SessionResponse } from '../types'
 
 interface AuthState {
-  token: string | null
   email: string | null
   role: string | null
   isAuthenticated: boolean
   isAdmin: boolean
+  loading: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
 
-const EMAIL_KEY = 'pharmadocs.email'
-const ROLE_KEY = 'pharmadocs.role'
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => tokenStorage.get())
-  const [email, setEmail] = useState<string | null>(() => localStorage.getItem(EMAIL_KEY))
-  const [role, setRole] = useState<string | null>(() => localStorage.getItem(ROLE_KEY))
+  const [user, setUser] = useState<SessionResponse | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Registratie is admin-only en gebeurt vanuit de app (zie UsersPage), niet hier.
+  // Bij het opstarten: wie is er ingelogd? Bepaald door de httpOnly-cookie —
+  // JavaScript kan die niet lezen, dus we vragen het aan de backend (/auth/me).
+  useEffect(() => {
+    let active = true
+    api
+      .get<SessionResponse>('/auth/me')
+      .then((res) => active && setUser(res.data))
+      .catch(() => active && setUser(null))
+      .finally(() => active && setLoading(false))
+    return () => {
+      active = false
+    }
+  }, [])
+
   async function login(email: string, password: string) {
-    const { data } = await api.post<AuthResponse>('/auth/login', { email, password })
-    tokenStorage.set(data.token)
-    localStorage.setItem(EMAIL_KEY, data.email)
-    localStorage.setItem(ROLE_KEY, data.role)
-    setToken(data.token)
-    setEmail(data.email)
-    setRole(data.role)
+    // De backend zet het token als httpOnly-cookie; wij krijgen enkel wie het is.
+    const { data } = await api.post<SessionResponse>('/auth/login', { email, password })
+    setUser(data)
+  }
+
+  async function logout() {
+    try {
+      await api.post('/auth/logout') // wist de cookie server-side
+    } catch {
+      // Cookie is sowieso weg of verlopen — geen probleem.
+    }
+    setUser(null)
+    window.location.assign('/login')
   }
 
   const value = useMemo<AuthState>(
     () => ({
-      token,
-      email,
-      role,
-      isAuthenticated: Boolean(token),
-      isAdmin: role === 'Admin',
+      email: user?.email ?? null,
+      role: user?.role ?? null,
+      isAuthenticated: user !== null,
+      isAdmin: user?.role === 'Admin',
+      loading,
       login,
-      logout: () => {
-        tokenStorage.clear()
-        localStorage.removeItem(EMAIL_KEY)
-        localStorage.removeItem(ROLE_KEY)
-        setToken(null)
-        setEmail(null)
-        setRole(null)
-      },
+      logout,
     }),
-    [token, email, role],
+    [user, loading],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

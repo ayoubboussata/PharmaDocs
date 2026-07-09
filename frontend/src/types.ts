@@ -1,8 +1,7 @@
-export interface AuthResponse {
-  token: string
+// Wie is er ingelogd — het token zelf zit in een httpOnly-cookie (L1), niet hier.
+export interface SessionResponse {
   email: string
   role: string
-  expiresAt: string
 }
 
 export interface CreatedUserResponse {
