@@ -10,6 +10,9 @@ public class User
 {
     public Guid Id { get; set; }
 
+    /// <summary>De organisatie (apotheek) waartoe deze gebruiker behoort — multi-tenant grens.</summary>
+    public Guid TenantId { get; set; }
+
     /// <summary>E-mailadres, uniek — dient als login.</summary>
     public string Email { get; set; } = string.Empty;
 

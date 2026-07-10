@@ -27,6 +27,9 @@ public class AuthService : IAuthService
         var user = new User
         {
             Id = Guid.NewGuid(),
+            // Fase 1 interim: nieuwe accounts komen in de default-organisatie. Fase 3
+            // vervangt dit door de tenant van de admin die het account aanmaakt.
+            TenantId = Organization.DefaultId,
             Email = email,
             // Enhanced = SHA-384 pre-hash, geen stille afkapping op 72 bytes.
             PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password, workFactor: 12),

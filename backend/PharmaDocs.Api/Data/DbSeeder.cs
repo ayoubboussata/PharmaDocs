@@ -14,6 +14,21 @@ public static class DbSeeder
 {
     public static void SeedAdmin(AppDbContext db, IConfiguration config, ILogger logger)
     {
+        // Zorg dat de default-organisatie bestaat (idempotent): alle single-tenant
+        // data hangt hieraan tot Fase 3 echte tenants introduceert. De migratie maakt
+        // ze normaal al aan; dit is een veiligheidsnet.
+        if (!db.Organizations.Any(o => o.Id == Organization.DefaultId))
+        {
+            db.Organizations.Add(new Organization
+            {
+                Id = Organization.DefaultId,
+                Name = "Apotheek De Wit",
+                Slug = "apotheek-de-wit",
+                CreatedAt = DateTime.UtcNow,
+            });
+            db.SaveChanges();
+        }
+
         var email = config["Seed:AdminEmail"]?.Trim().ToLowerInvariant();
         var password = config["Seed:AdminPassword"];
 
@@ -39,6 +54,7 @@ public static class DbSeeder
         db.Users.Add(new User
         {
             Id = Guid.NewGuid(),
+            TenantId = Organization.DefaultId,
             Email = email,
             PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, workFactor: 12),
             Role = UserRole.Admin,

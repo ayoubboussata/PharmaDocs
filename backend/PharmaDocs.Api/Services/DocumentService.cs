@@ -50,7 +50,10 @@ public class DocumentService : IDocumentService
         var document = new Document
         {
             Id = Guid.NewGuid(),
-            UserId = userId, // eigenaar = uploader (privé per gebruiker)
+            // Fase 1 interim: alles in de default-organisatie. Fase 3 haalt de tenant
+            // uit de JWT-claim; Fase 2 maakt de facturen gedeeld binnen de apotheek.
+            TenantId = Organization.DefaultId,
+            UserId = userId, // uploader (voor weergave/audit; zichtbaarheid wordt tenant-breed in Fase 2)
             FileName = file.FileName,
             ContentType = file.ContentType,
             FileSizeBytes = file.Length,
