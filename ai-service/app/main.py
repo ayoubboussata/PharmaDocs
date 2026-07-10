@@ -171,13 +171,17 @@ class AnswerContext(BaseModel):
 class AnswerRequest(BaseModel):
     question: str
     contexts: list[AnswerContext] = []
+    # Naam van de apotheek van de vragensteller; vult de systeemprompt in (MT6).
+    organizationName: str | None = None
 
 
 @app.post("/answer", dependencies=[Depends(require_internal_key)])
 def answer(req: AnswerRequest) -> dict[str, object]:
     """Genereert een gegrond antwoord op basis van de meegestuurde fragmenten (Claude)."""
     try:
-        text = answer_question(req.question, [c.model_dump() for c in req.contexts])
+        text = answer_question(
+            req.question, [c.model_dump() for c in req.contexts], req.organizationName
+        )
     except AnswerError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"answer": text}

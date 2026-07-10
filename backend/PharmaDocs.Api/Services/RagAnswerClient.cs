@@ -15,11 +15,13 @@ public class RagAnswerClient : IRagAnswerClient
     public RagAnswerClient(HttpClient http) => _http = http;
 
     public async Task<string> AnswerAsync(
-        string question, IReadOnlyList<RagContext> contexts, CancellationToken ct = default)
+        string question, IReadOnlyList<RagContext> contexts, string organizationName,
+        CancellationToken ct = default)
     {
         var body = new
         {
             question,
+            organizationName,
             contexts = contexts.Select(c => new { sourceName = c.SourceName, content = c.Content }),
         };
 

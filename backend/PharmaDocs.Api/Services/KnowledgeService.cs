@@ -15,17 +15,20 @@ public class KnowledgeService : IKnowledgeService
     private readonly IKnowledgeRepository _repository;
     private readonly IEmbeddingClient _embeddingClient;
     private readonly IRagAnswerClient _answerClient;
+    private readonly IOrganizationRepository _organizations;
     private readonly ITenantContext _tenant;
 
     public KnowledgeService(
         IKnowledgeRepository repository,
         IEmbeddingClient embeddingClient,
         IRagAnswerClient answerClient,
+        IOrganizationRepository organizations,
         ITenantContext tenant)
     {
         _repository = repository;
         _embeddingClient = embeddingClient;
         _answerClient = answerClient;
+        _organizations = organizations;
         _tenant = tenant;
     }
 
@@ -78,8 +81,13 @@ public class KnowledgeService : IKnowledgeService
         var chunks = await _repository.SearchAsync(queryVector, TopK, ct);
 
         // 3. Fragmenten als context naar Claude, dat gegrond antwoordt met bronvermelding.
+        //    De naam van de eigen apotheek gaat mee zodat de assistent zich als díé
+        //    apotheek voorstelt (MT6 — RAG-prompt per tenant).
+        var organization = await _organizations.GetByIdAsync(_tenant.TenantId, ct);
+        var organizationName = organization?.Name ?? "de apotheek";
+
         var contexts = chunks.Select(c => new RagContext(c.SourceName, c.Content)).ToList();
-        var answer = await _answerClient.AnswerAsync(question, contexts, ct);
+        var answer = await _answerClient.AnswerAsync(question, contexts, organizationName, ct);
 
         var sources = chunks.Select(c => c.SourceName).Distinct().ToList();
         return new AskResponse(answer, sources);

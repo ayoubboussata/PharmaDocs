@@ -13,11 +13,19 @@ import anthropic
 from .config import get_settings
 from .prompt_loader import load_system_prompt
 
-SYSTEM_PROMPT = load_system_prompt("rag_answer.md")
+# Bevat de placeholder {{organisatie}}; die wordt per vraag ingevuld met de naam van
+# de apotheek van de vragensteller (MT6 — RAG-prompt per tenant).
+SYSTEM_PROMPT_TEMPLATE = load_system_prompt("rag_answer.md")
 
 
 class AnswerError(Exception):
     """Antwoordgeneratie mislukt (geen sleutel, weigering of upstream-fout)."""
+
+
+def _system_prompt(organization_name: str | None) -> str:
+    """Vult de apotheeknaam in de systeemprompt in (met een neutrale terugval)."""
+    name = organization_name.strip() if organization_name and organization_name.strip() else "de apotheek"
+    return SYSTEM_PROMPT_TEMPLATE.replace("{{organisatie}}", name)
 
 
 def _build_user_message(question: str, contexts: list[dict]) -> str:
@@ -32,7 +40,9 @@ def _build_user_message(question: str, contexts: list[dict]) -> str:
     return f"Vraag: {question}\n\nFragmenten uit de interne procedures:\n\n{blocks}"
 
 
-def answer_question(question: str, contexts: list[dict]) -> str:
+def answer_question(
+    question: str, contexts: list[dict], organization_name: str | None = None
+) -> str:
     """Genereert een gegrond antwoord op basis van de fragmenten."""
     settings = get_settings()
     if not settings.ai_enabled:
@@ -44,7 +54,7 @@ def answer_question(question: str, contexts: list[dict]) -> str:
         response = client.messages.create(
             model=settings.anthropic_model,
             max_tokens=1024,
-            system=SYSTEM_PROMPT,
+            system=_system_prompt(organization_name),
             messages=[{"role": "user", "content": _build_user_message(question, contexts)}],
         )
     except anthropic.APIStatusError as exc:

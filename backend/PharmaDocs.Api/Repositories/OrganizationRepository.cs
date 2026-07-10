@@ -13,6 +13,9 @@ public class OrganizationRepository : IOrganizationRepository
     public Task<bool> SlugExistsAsync(string slug, CancellationToken ct = default) =>
         _db.Organizations.AnyAsync(o => o.Slug == slug, ct);
 
+    public Task<Organization?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
+        _db.Organizations.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id, ct);
+
     public async Task AddAsync(Organization organization, CancellationToken ct = default)
     {
         _db.Organizations.Add(organization);
