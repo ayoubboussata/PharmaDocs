@@ -12,6 +12,9 @@ public class KnowledgeChunk
 {
     public Guid Id { get; set; }
 
+    /// <summary>De organisatie (apotheek) die dit kennisstuk bezit — multi-tenant grens.</summary>
+    public Guid TenantId { get; set; }
+
     /// <summary>Bron (bestandsnaam van de procedure) waartoe dit stuk hoort.</summary>
     public string SourceName { get; set; } = string.Empty;
 

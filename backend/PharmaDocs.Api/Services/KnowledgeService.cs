@@ -47,6 +47,9 @@ public class KnowledgeService : IKnowledgeService
         var now = DateTime.UtcNow;
         var chunks = embedded.Select(c => new KnowledgeChunk
         {
+            // Fase 1 interim: default-organisatie. Fase 3 haalt de tenant uit de claim,
+            // Fase 2 dwingt de tenant-filter af op de RAG-zoektocht (SearchAsync).
+            TenantId = Organization.DefaultId,
             SourceName = sourceName,
             ChunkIndex = c.Index,
             Content = c.Content,

@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<ExtractedInvoice> ExtractedInvoices => Set<ExtractedInvoice>();
@@ -23,6 +24,14 @@ public class AppDbContext : DbContext
         // pgvector-extensie: nodig voor het vector-kolomtype (RAG, Fase 4).
         modelBuilder.HasPostgresExtension("vector");
 
+        // --- Multi-tenant: elke tenant is één apotheekbedrijf (Fase 1) ---
+        modelBuilder.Entity<Organization>(entity =>
+        {
+            entity.Property(o => o.Name).IsRequired().HasMaxLength(200);
+            entity.Property(o => o.Slug).IsRequired().HasMaxLength(120);
+            entity.HasIndex(o => o.Slug).IsUnique();
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.Property(u => u.Email).IsRequired().HasMaxLength(256);
@@ -33,8 +42,16 @@ public class AppDbContext : DbContext
                   .HasConversion<string>()
                   .HasMaxLength(20);
 
-            // E-mail moet uniek zijn (geen twee accounts op hetzelfde adres).
+            // E-mail globaal uniek: één persoon = één account (beslissing 2026-07-10).
             entity.HasIndex(u => u.Email).IsUnique();
+
+            // Tenant-koppeling. Restrict: een organisatie met gebruikers kan niet
+            // zomaar verwijderd worden (tenant-offboarding is een expliciete stap, Fase 6).
+            entity.HasIndex(u => u.TenantId);
+            entity.HasOne<Organization>()
+                  .WithMany()
+                  .HasForeignKey(u => u.TenantId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Document>(entity =>
@@ -60,6 +77,13 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(d => d.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            // Tenant-koppeling (de facturen zijn gedeeld binnen de apotheek).
+            entity.HasIndex(d => d.TenantId);
+            entity.HasOne<Organization>()
+                  .WithMany()
+                  .HasForeignKey(d => d.TenantId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ExtractedInvoice>(entity =>
@@ -96,8 +120,14 @@ public class AppDbContext : DbContext
             entity.Property(c => c.SourceName).IsRequired().HasMaxLength(500);
             entity.Property(c => c.Content).IsRequired();
 
-            // Snel de stukken van één bron ophalen/verwijderen bij herindexeren.
-            entity.HasIndex(c => c.SourceName);
+            // Snel de stukken van één bron binnen een tenant ophalen/verwijderen bij
+            // herindexeren. Tenant-scoped zodat "openingsuren.pdf" van twee apotheken
+            // niet botst (Fase 2 dwingt de tenant-filter af op de query's zelf).
+            entity.HasIndex(c => new { c.TenantId, c.SourceName });
+            entity.HasOne<Organization>()
+                  .WithMany()
+                  .HasForeignKey(c => c.TenantId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

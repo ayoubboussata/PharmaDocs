@@ -10,6 +10,9 @@ public class Document
 {
     public Guid Id { get; set; }
 
+    /// <summary>De organisatie (apotheek) die dit document bezit — multi-tenant grens.</summary>
+    public Guid TenantId { get; set; }
+
     /// <summary>Oorspronkelijke bestandsnaam zoals geüpload.</summary>
     public string FileName { get; set; } = string.Empty;
 
