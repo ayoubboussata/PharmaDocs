@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using PharmaDocs.Api.Common;
 using PharmaDocs.Api.Models;
 
 namespace PharmaDocs.Api.Data;
@@ -8,7 +10,12 @@ namespace PharmaDocs.Api.Data;
 /// </summary>
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    // De tenant van het huidige verzoek. Wordt door de global query filters gebruikt
+    // zodat élke query automatisch tenant-gescoped is (multi-tenant isolatie, Fase 2).
+    private readonly Guid _tenantId;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext tenant) : base(options)
+        => _tenantId = tenant.TenantId;
 
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<User> Users => Set<User>();
@@ -16,6 +23,15 @@ public class AppDbContext : DbContext
     public DbSet<ExtractedInvoice> ExtractedInvoices => Set<ExtractedInvoice>();
     public DbSet<InvoiceLineItem> InvoiceLineItems => Set<InvoiceLineItem>();
     public DbSet<KnowledgeChunk> KnowledgeChunks => Set<KnowledgeChunk>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        // ExtractedInvoice/InvoiceLineItem worden uitsluitend via hun (tenant-gefilterde)
+        // Document geladen en hebben zelf geen query filter. Onderdruk de EF-waarschuwing
+        // die anders bij elke query over die "required navigation"-interactie zou loggen.
+        optionsBuilder.ConfigureWarnings(w =>
+            w.Ignore(CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning));
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -84,6 +100,10 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(d => d.TenantId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Global query filter: élke query op Documents ziet enkel de eigen tenant.
+            // Isolatie is zo de default, niet iets dat je per query moet onthouden.
+            entity.HasQueryFilter(d => d.TenantId == _tenantId);
         });
 
         modelBuilder.Entity<ExtractedInvoice>(entity =>
@@ -120,6 +140,12 @@ public class AppDbContext : DbContext
             entity.Property(c => c.SourceName).IsRequired().HasMaxLength(500);
             entity.Property(c => c.Content).IsRequired();
 
+            // De pgvector-kolom bestaat enkel op PostgreSQL. Onder een niet-relationele
+            // provider (InMemory, in de tests) kent EF het Vector-type niet → negeer de
+            // property daar. Het schema op Npgsql blijft ongewijzigd (vector(1024)).
+            if (!Database.IsNpgsql())
+                entity.Ignore(c => c.Embedding);
+
             // Snel de stukken van één bron binnen een tenant ophalen/verwijderen bij
             // herindexeren. Tenant-scoped zodat "openingsuren.pdf" van twee apotheken
             // niet botst (Fase 2 dwingt de tenant-filter af op de query's zelf).
@@ -128,6 +154,10 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(c => c.TenantId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Global query filter: de RAG-zoektocht (SearchAsync) en het bronnenoverzicht
+            // zien enkel de kennisstukken van de eigen tenant → sluit het cross-tenant lek.
+            entity.HasQueryFilter(c => c.TenantId == _tenantId);
         });
     }
 }

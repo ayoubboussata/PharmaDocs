@@ -1,12 +1,23 @@
 using Microsoft.AspNetCore.Http;
+using PharmaDocs.Api.Common;
 using PharmaDocs.Api.Models;
 using PharmaDocs.Api.Models.Enums;
 
 namespace PharmaDocs.Tests;
 
+/// <summary>Een vaste tenant voor de tests (vervangt de HTTP-claim-gebaseerde context).</summary>
+internal sealed class FixedTenantContext : ITenantContext
+{
+    public static readonly Guid Id = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    public Guid TenantId => Id;
+}
+
 /// <summary>Kleine fabriekjes om test-entiteiten en -bestanden op te bouwen.</summary>
 internal static class TestData
 {
+    /// <summary>Tenant-context-stub voor services die er een nodig hebben.</summary>
+    public static ITenantContext Tenant() => new FixedTenantContext();
+
     public static Document Doc(
         string supplier,
         string invoiceNr,

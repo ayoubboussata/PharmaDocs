@@ -8,20 +8,20 @@ namespace PharmaDocs.Api.Repositories;
 /// </summary>
 public interface IDocumentRepository
 {
-    /// <summary>Alle documenten <b>van deze gebruiker</b>, nieuwste eerst, met hun extractie.</summary>
-    Task<IReadOnlyList<Document>> GetAllAsync(Guid userId, CancellationToken ct = default);
+    /// <summary>Alle documenten <b>van de tenant</b>, nieuwste eerst, met hun extractie.</summary>
+    Task<IReadOnlyList<Document>> GetAllAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Eén document van deze gebruiker met extractie + lijnitems, of null als het
-    /// niet bestaat <b>of niet van deze gebruiker is</b> (eigenaarschapscheck).
+    /// Eén document van de tenant met extractie + lijnitems, of null als het niet
+    /// bestaat <b>of van een andere tenant is</b> (de global query filter scoopt op tenant).
     /// </summary>
-    Task<Document?> GetByIdAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<Document?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
     /// <summary>
     /// Zoals <see cref="GetByIdAsync"/>, maar <b>getrackt</b> zodat wijzigingen
-    /// (handmatige correctie) bewaard kunnen worden. Ook hier de eigenaarschapscheck.
+    /// (handmatige correctie) bewaard kunnen worden. Ook tenant-gescoped.
     /// </summary>
-    Task<Document?> GetTrackedByIdAsync(Guid id, Guid userId, CancellationToken ct = default);
+    Task<Document?> GetTrackedByIdAsync(Guid id, CancellationToken ct = default);
 
     /// <summary>Voegt een nieuw document toe en bewaart meteen.</summary>
     Task AddAsync(Document document, CancellationToken ct = default);

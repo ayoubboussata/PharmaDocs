@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PharmaDocs.Api.Common;
 using PharmaDocs.Api.Configuration;
 using PharmaDocs.Api.Controllers;
 using PharmaDocs.Api.Data;
@@ -139,6 +140,12 @@ void ConfigureAiClient(HttpClient client)
 builder.Services.AddHttpClient<IInvoiceExtractionClient, InvoiceExtractionClient>(ConfigureAiClient);
 builder.Services.AddHttpClient<IEmbeddingClient, EmbeddingClient>(ConfigureAiClient);
 builder.Services.AddHttpClient<IRagAnswerClient, RagAnswerClient>(ConfigureAiClient);
+
+// --- Multi-tenant: de huidige tenant (apotheek) uit de JWT-claim (Fase 2) ---
+// TenantContext leest de "tenant"-claim; de EF global query filter in AppDbContext
+// scoopt élke query hierop. HttpContextAccessor is nodig om bij de claim te kunnen.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantContext, TenantContext>();
 
 // --- Dependency injection: gelaagde structuur ---
 builder.Services.AddScoped<IUserRepository, UserRepository>();

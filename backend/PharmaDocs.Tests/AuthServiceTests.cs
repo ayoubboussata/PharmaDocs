@@ -21,7 +21,7 @@ public class AuthServiceTests
         var tokens = new Mock<ITokenService>();
         tokens.Setup(t => t.CreateToken(It.IsAny<User>()))
             .Returns(new TokenResult("jwt-token", DateTime.UtcNow.AddMinutes(60)));
-        return (new AuthService(users.Object, tokens.Object), users, tokens);
+        return (new AuthService(users.Object, tokens.Object, TestData.Tenant()), users, tokens);
     }
 
     // Lage work factor: enkel om de verify-tak te testen, houdt de test snel.

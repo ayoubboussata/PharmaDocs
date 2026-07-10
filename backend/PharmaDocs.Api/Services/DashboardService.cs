@@ -6,9 +6,9 @@ using PharmaDocs.Api.Repositories;
 namespace PharmaDocs.Api.Services;
 
 /// <summary>
-/// Berekent de dashboard-cijfers uit de verwerkte facturen van de gebruiker.
-/// De aggregatie gebeurt in-memory op de (per gebruiker gefilterde) documenten —
-/// eenvoudig en ruim voldoende voor het datavolume van deze toepassing.
+/// Berekent de dashboard-cijfers uit de verwerkte facturen van de tenant (apotheek).
+/// De aggregatie gebeurt in-memory op de (via de global query filter tenant-gescoopte)
+/// documenten — eenvoudig en ruim voldoende voor het datavolume van deze toepassing.
 /// </summary>
 public class DashboardService : IDashboardService
 {
@@ -18,9 +18,9 @@ public class DashboardService : IDashboardService
 
     public DashboardService(IDocumentRepository repository) => _repository = repository;
 
-    public async Task<DashboardSummaryDto> GetSummaryAsync(Guid userId, CancellationToken ct = default)
+    public async Task<DashboardSummaryDto> GetSummaryAsync(CancellationToken ct = default)
     {
-        var documents = await _repository.GetAllAsync(userId, ct);
+        var documents = await _repository.GetAllAsync(ct);
 
         // Enkel verwerkte documenten met een extractie tellen mee.
         var invoices = documents

@@ -25,7 +25,7 @@ public class DocumentsController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<DocumentSummaryDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<DocumentSummaryDto>>> GetAll(CancellationToken ct)
     {
-        var documents = await _service.GetAllAsync(User.GetUserId(), ct);
+        var documents = await _service.GetAllAsync(ct);
         return Ok(documents);
     }
 
@@ -35,7 +35,7 @@ public class DocumentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<DocumentDetailDto>> GetById(Guid id, CancellationToken ct)
     {
-        var document = await _service.GetByIdAsync(id, User.GetUserId(), ct);
+        var document = await _service.GetByIdAsync(id, ct);
         return document is null ? NotFound() : Ok(document);
     }
 
@@ -67,17 +67,17 @@ public class DocumentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Export([FromBody] ExportInvoicesRequest? request, CancellationToken ct)
     {
-        var csv = await _service.ExportCsvAsync(User.GetUserId(), request?.Ids, ct);
+        var csv = await _service.ExportCsvAsync(request?.Ids, ct);
         return File(csv, "text/csv", $"pharmadocs-facturen-{DateTime.UtcNow:yyyy-MM-dd}.csv");
     }
 
-    /// <summary>Verwijdert een document van de gebruiker (incl. de extractie via cascade).</summary>
+    /// <summary>Verwijdert een document van de apotheek (incl. de extractie via cascade).</summary>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var deleted = await _service.DeleteAsync(id, User.GetUserId(), ct);
+        var deleted = await _service.DeleteAsync(id, ct);
         return deleted ? NoContent() : NotFound();
     }
 
@@ -92,7 +92,7 @@ public class DocumentsController : ControllerBase
     public async Task<ActionResult<DocumentDetailDto>> UpdateInvoice(
         Guid id, UpdateInvoiceRequest request, CancellationToken ct)
     {
-        var updated = await _service.UpdateInvoiceAsync(id, User.GetUserId(), request, ct);
+        var updated = await _service.UpdateInvoiceAsync(id, request, ct);
         return updated is null ? NotFound() : Ok(updated);
     }
 }

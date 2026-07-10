@@ -18,7 +18,8 @@ public class DocumentServiceUploadTests
         repo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var client = new Mock<IInvoiceExtractionClient>();
-        var svc = new DocumentService(repo.Object, client.Object, NullLogger<DocumentService>.Instance);
+        var svc = new DocumentService(
+            repo.Object, client.Object, TestData.Tenant(), NullLogger<DocumentService>.Instance);
         return (svc, repo, client);
     }
 

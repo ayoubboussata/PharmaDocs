@@ -15,15 +15,18 @@ public class KnowledgeService : IKnowledgeService
     private readonly IKnowledgeRepository _repository;
     private readonly IEmbeddingClient _embeddingClient;
     private readonly IRagAnswerClient _answerClient;
+    private readonly ITenantContext _tenant;
 
     public KnowledgeService(
         IKnowledgeRepository repository,
         IEmbeddingClient embeddingClient,
-        IRagAnswerClient answerClient)
+        IRagAnswerClient answerClient,
+        ITenantContext tenant)
     {
         _repository = repository;
         _embeddingClient = embeddingClient;
         _answerClient = answerClient;
+        _tenant = tenant;
     }
 
     public async Task<KnowledgeIngestResponse> IngestAsync(IFormFile file, CancellationToken ct = default)
@@ -47,9 +50,7 @@ public class KnowledgeService : IKnowledgeService
         var now = DateTime.UtcNow;
         var chunks = embedded.Select(c => new KnowledgeChunk
         {
-            // Fase 1 interim: default-organisatie. Fase 3 haalt de tenant uit de claim,
-            // Fase 2 dwingt de tenant-filter af op de RAG-zoektocht (SearchAsync).
-            TenantId = Organization.DefaultId,
+            TenantId = _tenant.TenantId,   // kennisstukken zijn tenant-gescoped (geen cross-tenant lek)
             SourceName = sourceName,
             ChunkIndex = c.Index,
             Content = c.Content,
