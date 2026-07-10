@@ -8,5 +8,7 @@ public record TokenResult(string Token, DateTime ExpiresAt);
 /// <summary>Maakt JWT-access-tokens aan voor geauthenticeerde gebruikers.</summary>
 public interface ITokenService
 {
-    TokenResult CreateToken(User user);
+    /// <summary>Maakt een token voor <paramref name="user"/>; <paramref name="organizationName"/>
+    /// wordt als "org"-claim opgenomen (voor de front-end, zonder extra DB-call op /me).</summary>
+    TokenResult CreateToken(User user, string organizationName);
 }

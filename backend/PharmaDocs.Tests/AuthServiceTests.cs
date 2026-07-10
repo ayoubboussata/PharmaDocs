@@ -19,9 +19,14 @@ public class AuthServiceTests
     {
         var users = new Mock<IUserRepository>();
         var tokens = new Mock<ITokenService>();
-        tokens.Setup(t => t.CreateToken(It.IsAny<User>()))
+        tokens.Setup(t => t.CreateToken(It.IsAny<User>(), It.IsAny<string>()))
             .Returns(new TokenResult("jwt-token", DateTime.UtcNow.AddMinutes(60)));
-        return (new AuthService(users.Object, tokens.Object, TestData.Tenant()), users, tokens);
+
+        var orgs = new Mock<IOrganizationRepository>();
+        orgs.Setup(o => o.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Organization { Id = Guid.NewGuid(), Name = "Test-Apotheek", Slug = "test-apotheek" });
+
+        return (new AuthService(users.Object, tokens.Object, orgs.Object, TestData.Tenant()), users, tokens);
     }
 
     // Lage work factor: enkel om de verify-tak te testen, houdt de test snel.
@@ -99,6 +104,7 @@ public class AuthServiceTests
         Assert.Equal("jwt-token", result.Token);
         Assert.Equal("jan@apotheek.be", result.Email);
         Assert.Equal("Admin", result.Role);
-        tokens.Verify(t => t.CreateToken(It.IsAny<User>()), Times.Once);
+        Assert.Equal("Test-Apotheek", result.Organization); // apotheeknaam in de sessie
+        tokens.Verify(t => t.CreateToken(It.IsAny<User>(), It.IsAny<string>()), Times.Once);
     }
 }

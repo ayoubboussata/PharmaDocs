@@ -5,9 +5,11 @@ import { DocumentsPage } from './pages/DocumentsPage'
 import { DocumentDetailPage } from './pages/DocumentDetailPage'
 import { AssistantPage } from './pages/AssistantPage'
 import { UsersPage } from './pages/UsersPage'
+import { OrganizationsPage } from './pages/OrganizationsPage'
 import { AppLayout } from './components/AppLayout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminRoute } from './components/AdminRoute'
+import { SystemAdminRoute } from './components/SystemAdminRoute'
 
 export default function App() {
   return (
@@ -31,6 +33,14 @@ export default function App() {
             <AdminRoute>
               <UsersPage />
             </AdminRoute>
+          }
+        />
+        <Route
+          path="/organizations"
+          element={
+            <SystemAdminRoute>
+              <OrganizationsPage />
+            </SystemAdminRoute>
           }
         />
       </Route>

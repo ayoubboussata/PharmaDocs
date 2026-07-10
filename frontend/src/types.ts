@@ -2,11 +2,21 @@
 export interface SessionResponse {
   email: string
   role: string
+  organization: string
 }
 
 export interface CreatedUserResponse {
   email: string
   role: string
+}
+
+// --- Organisaties (tenants) — enkel voor de operator (SystemAdmin) ---
+
+export interface Organization {
+  id: string
+  name: string
+  slug: string
+  createdAt: string
 }
 
 export type DocumentStatus = 'Pending' | 'Processed' | 'Failed'
