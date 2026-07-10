@@ -10,34 +10,35 @@ public class DocumentRepository : IDocumentRepository
 
     public DocumentRepository(AppDbContext db) => _db = db;
 
-    public async Task<IReadOnlyList<Document>> GetAllAsync(Guid userId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Document>> GetAllAsync(CancellationToken ct = default)
     {
         // AsNoTracking: read-only query, geen change-tracking nodig → sneller.
+        // De tenant-scoping gebeurt via de global query filter (AppDbContext).
         return await _db.Documents
             .AsNoTracking()
-            .Where(d => d.UserId == userId)
             .Include(d => d.ExtractedInvoice)
             .OrderByDescending(d => d.UploadedAt)
             .ToListAsync(ct);
     }
 
-    public async Task<Document?> GetByIdAsync(Guid id, Guid userId, CancellationToken ct = default)
+    public async Task<Document?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        // Eigenaarschapscheck in de query: een vreemd document geeft null → 404.
+        // De global query filter scoopt op tenant: een document van een andere tenant
+        // geeft null → 404.
         return await _db.Documents
             .AsNoTracking()
             .Include(d => d.ExtractedInvoice)
                 .ThenInclude(i => i!.LineItems)
-            .FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId, ct);
+            .FirstOrDefaultAsync(d => d.Id == id, ct);
     }
 
-    public async Task<Document?> GetTrackedByIdAsync(Guid id, Guid userId, CancellationToken ct = default)
+    public async Task<Document?> GetTrackedByIdAsync(Guid id, CancellationToken ct = default)
     {
         // Bewust géén AsNoTracking: de entiteit wordt gewijzigd en bewaard.
         return await _db.Documents
             .Include(d => d.ExtractedInvoice)
                 .ThenInclude(i => i!.LineItems)
-            .FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId, ct);
+            .FirstOrDefaultAsync(d => d.Id == id, ct);
     }
 
     public async Task AddAsync(Document document, CancellationToken ct = default)

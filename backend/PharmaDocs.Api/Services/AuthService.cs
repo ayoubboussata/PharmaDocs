@@ -1,3 +1,4 @@
+using PharmaDocs.Api.Common;
 using PharmaDocs.Api.Common.Exceptions;
 using PharmaDocs.Api.DTOs.Auth;
 using PharmaDocs.Api.Models;
@@ -10,11 +11,13 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _users;
     private readonly ITokenService _tokens;
+    private readonly ITenantContext _tenant;
 
-    public AuthService(IUserRepository users, ITokenService tokens)
+    public AuthService(IUserRepository users, ITokenService tokens, ITenantContext tenant)
     {
         _users = users;
         _tokens = tokens;
+        _tenant = tenant;
     }
 
     public async Task<CreatedUserResponse> RegisterAsync(RegisterRequest request, CancellationToken ct = default)
@@ -27,9 +30,8 @@ public class AuthService : IAuthService
         var user = new User
         {
             Id = Guid.NewGuid(),
-            // Fase 1 interim: nieuwe accounts komen in de default-organisatie. Fase 3
-            // vervangt dit door de tenant van de admin die het account aanmaakt.
-            TenantId = Organization.DefaultId,
+            // Nieuwe accounts horen bij de tenant van de admin die ze aanmaakt.
+            TenantId = _tenant.TenantId,
             Email = email,
             // Enhanced = SHA-384 pre-hash, geen stille afkapping op 72 bytes.
             PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password, workFactor: 12),

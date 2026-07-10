@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using PharmaDocs.Api.Common;
+using PharmaDocs.Api.Models;
 
 namespace PharmaDocs.Api.Data;
 
@@ -21,6 +23,13 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
             .UseNpgsql(connectionString, o => o.UseVector())
             .Options;
 
-        return new AppDbContext(options);
+        // De tooling bouwt enkel het model (query filters raken het schema niet), dus
+        // een vaste tenant volstaat.
+        return new AppDbContext(options, new DesignTimeTenantContext());
+    }
+
+    private sealed class DesignTimeTenantContext : ITenantContext
+    {
+        public Guid TenantId => Organization.DefaultId;
     }
 }

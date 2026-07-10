@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PharmaDocs.Api.Common;
 using PharmaDocs.Api.DTOs.Dashboard;
 using PharmaDocs.Api.Services;
 
@@ -19,12 +18,12 @@ public class DashboardController : ControllerBase
 
     public DashboardController(IDashboardService service) => _service = service;
 
-    /// <summary>Samenvattende dashboard-cijfers voor de ingelogde gebruiker.</summary>
+    /// <summary>Samenvattende dashboard-cijfers voor de apotheek van de ingelogde gebruiker.</summary>
     [HttpGet]
     [ProducesResponseType(typeof(DashboardSummaryDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<DashboardSummaryDto>> GetSummary(CancellationToken ct)
     {
-        var summary = await _service.GetSummaryAsync(User.GetUserId(), ct);
+        var summary = await _service.GetSummaryAsync(ct);
         return Ok(summary);
     }
 }

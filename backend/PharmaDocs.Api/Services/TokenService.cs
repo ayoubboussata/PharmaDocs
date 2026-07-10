@@ -22,6 +22,9 @@ public class TokenService : ITokenService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            // Tenant (apotheek) waartoe de gebruiker hoort — voedt de multi-tenant
+            // isolatie (ITenantContext + EF global query filter).
+            new Claim("tenant", user.TenantId.ToString()),
             // Rol als "role"-claim; Program.cs zet RoleClaimType hierop zodat
             // [Authorize(Roles = "Admin")] werkt.
             new Claim("role", user.Role.ToString()),

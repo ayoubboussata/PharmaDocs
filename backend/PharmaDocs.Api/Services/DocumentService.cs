@@ -17,31 +17,34 @@ public class DocumentService : IDocumentService
 
     private readonly IDocumentRepository _repository;
     private readonly IInvoiceExtractionClient _extractionClient;
+    private readonly ITenantContext _tenant;
     private readonly ILogger<DocumentService> _logger;
 
     public DocumentService(
         IDocumentRepository repository,
         IInvoiceExtractionClient extractionClient,
+        ITenantContext tenant,
         ILogger<DocumentService> logger)
     {
         _repository = repository;
         _extractionClient = extractionClient;
+        _tenant = tenant;
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<DocumentSummaryDto>> GetAllAsync(Guid userId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<DocumentSummaryDto>> GetAllAsync(CancellationToken ct = default)
     {
-        var documents = await _repository.GetAllAsync(userId, ct);
+        var documents = await _repository.GetAllAsync(ct);
         return documents.Select(d => d.ToSummaryDto()).ToList();
     }
 
-    public async Task<DocumentDetailDto?> GetByIdAsync(Guid id, Guid userId, CancellationToken ct = default)
+    public async Task<DocumentDetailDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var document = await _repository.GetByIdAsync(id, userId, ct);
+        var document = await _repository.GetByIdAsync(id, ct);
         return document?.ToDetailDto();
     }
 
-    public async Task<DocumentDetailDto> UploadAndExtractAsync(IFormFile file, Guid userId, CancellationToken ct = default)
+    public async Task<DocumentDetailDto> UploadAndExtractAsync(IFormFile file, Guid uploaderId, CancellationToken ct = default)
     {
         PdfUploadValidator.Validate(file);
 
@@ -50,10 +53,8 @@ public class DocumentService : IDocumentService
         var document = new Document
         {
             Id = Guid.NewGuid(),
-            // Fase 1 interim: alles in de default-organisatie. Fase 3 haalt de tenant
-            // uit de JWT-claim; Fase 2 maakt de facturen gedeeld binnen de apotheek.
-            TenantId = Organization.DefaultId,
-            UserId = userId, // uploader (voor weergave/audit; zichtbaarheid wordt tenant-breed in Fase 2)
+            TenantId = _tenant.TenantId,   // eigenaar-apotheek (facturen zijn tenant-breed gedeeld)
+            UserId = uploaderId,           // uploader (voor weergave/audit)
             FileName = file.FileName,
             ContentType = file.ContentType,
             FileSizeBytes = file.Length,
@@ -95,9 +96,9 @@ public class DocumentService : IDocumentService
     }
 
     public async Task<DocumentDetailDto?> UpdateInvoiceAsync(
-        Guid id, Guid userId, UpdateInvoiceRequest request, CancellationToken ct = default)
+        Guid id, UpdateInvoiceRequest request, CancellationToken ct = default)
     {
-        var document = await _repository.GetTrackedByIdAsync(id, userId, ct);
+        var document = await _repository.GetTrackedByIdAsync(id, ct);
         if (document is null)
             return null;
         if (document.ExtractedInvoice is null)
@@ -137,9 +138,9 @@ public class DocumentService : IDocumentService
     private static readonly CultureInfo NlBe = CultureInfo.GetCultureInfo("nl-BE");
 
     public async Task<byte[]> ExportCsvAsync(
-        Guid userId, IReadOnlyCollection<Guid>? ids, CancellationToken ct = default)
+        IReadOnlyCollection<Guid>? ids, CancellationToken ct = default)
     {
-        var documents = await _repository.GetAllAsync(userId, ct);
+        var documents = await _repository.GetAllAsync(ct);
 
         // Selectie: enkel de gekozen documenten (indien meegegeven).
         if (ids is { Count: > 0 })
@@ -180,10 +181,11 @@ public class DocumentService : IDocumentService
         return Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
     }
 
-    public async Task<bool> DeleteAsync(Guid id, Guid userId, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
-        // Eigenaarschapscheck zit in de query: een vreemd document geeft null → false → 404.
-        var document = await _repository.GetTrackedByIdAsync(id, userId, ct);
+        // Tenant-scoping zit in de query filter: een document van een andere tenant
+        // geeft null → false → 404.
+        var document = await _repository.GetTrackedByIdAsync(id, ct);
         if (document is null)
             return false;
         await _repository.DeleteAsync(document, ct);

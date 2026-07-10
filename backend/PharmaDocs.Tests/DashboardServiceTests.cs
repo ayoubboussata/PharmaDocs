@@ -13,7 +13,7 @@ public class DashboardServiceTests
     private static DashboardService Build(IReadOnlyList<Document> docs)
     {
         var repo = new Mock<IDocumentRepository>();
-        repo.Setup(r => r.GetAllAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        repo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(docs);
         return new DashboardService(repo.Object);
     }
@@ -29,7 +29,7 @@ public class DashboardServiceTests
             TestData.Doc("Gamma", "F-4", 0m, 0m, 0m, status: DocumentStatus.Failed), // telt niet mee
         };
 
-        var summary = await Build(docs).GetSummaryAsync(Guid.NewGuid());
+        var summary = await Build(docs).GetSummaryAsync();
 
         Assert.Equal(3, summary.InvoiceCount);            // Failed uitgesloten
         Assert.Equal(423m, summary.TotalSpend);           // 121 + 242 + 60
@@ -46,7 +46,7 @@ public class DashboardServiceTests
             TestData.Doc("Beta", "F-2", 50m, 10m, 60m, date: new DateOnly(2026, 5, 1)),
         };
 
-        var summary = await Build(docs).GetSummaryAsync(Guid.NewGuid());
+        var summary = await Build(docs).GetSummaryAsync();
 
         Assert.Equal(2, summary.ByMonth.Count);
         Assert.Equal("2026-05", summary.ByMonth[0].Month); // oplopend gesorteerd
@@ -62,7 +62,7 @@ public class DashboardServiceTests
             TestData.Doc("Beta", "F-2", 50m, 10m, 60m, category: "Diensten"),
         };
 
-        var summary = await Build(docs).GetSummaryAsync(Guid.NewGuid());
+        var summary = await Build(docs).GetSummaryAsync();
 
         Assert.Contains(summary.ByCategory, c => c.Label == "Geneesmiddelen");
         Assert.Contains(summary.ByCategory, c => c.Label == "Diensten");

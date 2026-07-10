@@ -18,7 +18,7 @@ public class KnowledgeServiceTests
         var repo = new Mock<IKnowledgeRepository>();
         var embed = new Mock<IEmbeddingClient>();
         var answer = new Mock<IRagAnswerClient>();
-        var svc = new KnowledgeService(repo.Object, embed.Object, answer.Object);
+        var svc = new KnowledgeService(repo.Object, embed.Object, answer.Object, TestData.Tenant());
         return (svc, repo, embed, answer);
     }
 
