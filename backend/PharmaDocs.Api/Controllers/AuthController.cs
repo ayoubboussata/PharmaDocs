@@ -52,7 +52,7 @@ public class AuthController : ControllerBase
     {
         var auth = await _auth.LoginAsync(request, ct);
         SetAuthCookie(auth.Token, auth.ExpiresAt);
-        return Ok(new SessionResponse(auth.Email, auth.Role));
+        return Ok(new SessionResponse(auth.Email, auth.Role, auth.Organization));
     }
 
     /// <summary>Wie is er ingelogd (op basis van de cookie)? Voor de front-end bij het opstarten.</summary>
@@ -64,7 +64,8 @@ public class AuthController : ControllerBase
     {
         var email = User.FindFirst("email")?.Value ?? string.Empty;
         var role = User.FindFirst("role")?.Value ?? "User";
-        return Ok(new SessionResponse(email, role));
+        var organization = User.FindFirst("org")?.Value ?? string.Empty;
+        return Ok(new SessionResponse(email, role, organization));
     }
 
     /// <summary>Meldt af door de auth-cookie te wissen. Werkt ook met een verlopen sessie.</summary>

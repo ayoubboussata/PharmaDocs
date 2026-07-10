@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, FileText, Sparkles, Users, Pill, Sun, Moon, LogOut } from 'lucide-react'
+import { LayoutDashboard, FileText, Sparkles, Users, Building2, Pill, Sun, Moon, LogOut } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../theme/ThemeContext'
 
@@ -10,25 +10,34 @@ const baseNav = [
 ]
 
 export function Sidebar() {
-  const { email, isAdmin, logout } = useAuth()
+  const { email, organization, isAdmin, isSystemAdmin, logout } = useAuth()
   const { theme, toggle } = useTheme()
 
-  // "Gebruikers" enkel voor admins (registratie is admin-only).
-  const nav = isAdmin
-    ? [...baseNav, { to: '/users', label: 'Gebruikers', icon: Users }]
-    : baseNav
+  // "Gebruikers" enkel voor tenant-admins; "Organisaties" enkel voor de operator.
+  const nav = [
+    ...baseNav,
+    ...(isAdmin ? [{ to: '/users', label: 'Gebruikers', icon: Users }] : []),
+    ...(isSystemAdmin ? [{ to: '/organizations', label: 'Organisaties', icon: Building2 }] : []),
+  ]
 
   const initial = email?.[0]?.toUpperCase() ?? '?'
 
   return (
     <aside className="sticky top-0 flex h-screen w-16 shrink-0 flex-col border-r border-line bg-sidebar lg:w-64">
-      {/* Merk */}
+      {/* Merk + apotheek (tenant) */}
       <div className="flex h-16 items-center gap-2.5 px-3 lg:px-5">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-fg">
           <Pill size={18} />
         </span>
-        <span className="hidden text-[15px] font-semibold tracking-tight text-fg lg:block">
-          PharmaDocs
+        <span className="hidden min-w-0 flex-col lg:flex">
+          <span className="truncate text-[15px] font-semibold leading-tight tracking-tight text-fg">
+            PharmaDocs
+          </span>
+          {organization && (
+            <span className="truncate text-xs leading-tight text-muted" title={organization}>
+              {organization}
+            </span>
+          )}
         </span>
       </div>
 

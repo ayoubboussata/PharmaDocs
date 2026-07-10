@@ -11,12 +11,18 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _users;
     private readonly ITokenService _tokens;
+    private readonly IOrganizationRepository _organizations;
     private readonly ITenantContext _tenant;
 
-    public AuthService(IUserRepository users, ITokenService tokens, ITenantContext tenant)
+    public AuthService(
+        IUserRepository users,
+        ITokenService tokens,
+        IOrganizationRepository organizations,
+        ITenantContext tenant)
     {
         _users = users;
         _tokens = tokens;
+        _organizations = organizations;
         _tenant = tenant;
     }
 
@@ -55,12 +61,10 @@ public class AuthService : IAuthService
         if (user is null || !BCrypt.Net.BCrypt.EnhancedVerify(request.Password, user.PasswordHash))
             throw new UnauthorizedException("Ongeldige inloggegevens.");
 
-        return BuildResponse(user);
-    }
+        var organization = await _organizations.GetByIdAsync(user.TenantId, ct);
+        var organizationName = organization?.Name ?? "de apotheek";
 
-    private AuthResponse BuildResponse(User user)
-    {
-        var token = _tokens.CreateToken(user);
-        return new AuthResponse(token.Token, user.Email, user.Role.ToString(), token.ExpiresAt);
+        var token = _tokens.CreateToken(user, organizationName);
+        return new AuthResponse(token.Token, user.Email, user.Role.ToString(), organizationName, token.ExpiresAt);
     }
 }

@@ -5,8 +5,10 @@ import type { SessionResponse } from '../types'
 interface AuthState {
   email: string | null
   role: string | null
+  organization: string | null
   isAuthenticated: boolean
   isAdmin: boolean
+  isSystemAdmin: boolean
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
@@ -52,8 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       email: user?.email ?? null,
       role: user?.role ?? null,
+      organization: user?.organization ?? null,
       isAuthenticated: user !== null,
       isAdmin: user?.role === 'Admin',
+      isSystemAdmin: user?.role === 'SystemAdmin',
       loading,
       login,
       logout,
