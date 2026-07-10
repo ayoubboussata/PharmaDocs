@@ -1,0 +1,5 @@
+# Test-afhankelijkheden voor de AI-service. Installeer met:
+#   pip install -r requirements-dev.txt
+# (bevat de runtime-deps via -r requirements.txt + pytest).
+-r requirements.txt
+pytest==8.3.4

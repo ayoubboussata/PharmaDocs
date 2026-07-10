@@ -13,17 +13,21 @@ public class KnowledgeRepository : IKnowledgeRepository
 
     public KnowledgeRepository(AppDbContext db) => _db = db;
 
-    public async Task DeleteBySourceAsync(string sourceName, CancellationToken ct = default)
+    public async Task ReplaceSourceAsync(
+        string sourceName, IReadOnlyList<KnowledgeChunk> chunks, CancellationToken ct = default)
     {
+        // Delete + insert samen in één transactie: valt de insert weg (bv. DB-fout),
+        // dan rolt ook de delete terug en blijft de oude index intact.
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
         await _db.KnowledgeChunks
             .Where(c => c.SourceName == sourceName)
             .ExecuteDeleteAsync(ct);
-    }
 
-    public async Task AddChunksAsync(IEnumerable<KnowledgeChunk> chunks, CancellationToken ct = default)
-    {
         _db.KnowledgeChunks.AddRange(chunks);
         await _db.SaveChangesAsync(ct);
+
+        await tx.CommitAsync(ct);
     }
 
     public async Task<IReadOnlyList<KnowledgeSourceDto>> GetSourcesAsync(CancellationToken ct = default)
