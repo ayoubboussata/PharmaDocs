@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using PharmaDocs.Api.Common.Exceptions;
 using PharmaDocs.Api.Models;
 
 namespace PharmaDocs.Api.Common;
@@ -16,15 +17,25 @@ public class TenantContext : ITenantContext
     {
         get
         {
-            var value = _http.HttpContext?.User.FindFirst("tenant")?.Value;
+            var httpContext = _http.HttpContext;
+
+            // Geen HttpContext = achtergrond-/opstartwerk (bv. de DbSeeder of het
+            // toepassen van migraties): val terug op de default-organisatie.
+            if (httpContext is null)
+                return Organization.DefaultId;
+
+            var value = httpContext.User.FindFirst("tenant")?.Value;
             if (Guid.TryParse(value, out var id))
                 return id;
 
-            // Terugval op de default-organisatie:
-            //  - bij achtergrond-/opstartwerk (geen HttpContext, bv. de seeder);
-            //  - bij een oud token van vóór de tenant-claim (eenmalig opnieuw inloggen).
-            // Veilig zolang er één organisatie is. Fase 3 (echte multi-tenant onboarding)
-            // maakt een ontbrekende claim op een geauthenticeerd verzoek een harde fout.
+            // Een geauthenticeerd verzoek zonder geldige tenant-claim is een anomalie
+            // (bv. een oud token van vóór de multi-tenant claim): weiger het i.p.v.
+            // stilzwijgend op een tenant terug te vallen (zou cross-tenant kunnen lekken).
+            if (httpContext.User.Identity?.IsAuthenticated == true)
+                throw new UnauthorizedException("Geen geldige tenant in het token. Log opnieuw in.");
+
+            // Niet-geauthenticeerd (bv. de login zelf): nog geen tenant nodig; de User-
+            // tabel heeft geen tenant-filter, dus deze waarde wordt niet gebruikt.
             return Organization.DefaultId;
         }
     }

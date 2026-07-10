@@ -63,4 +63,40 @@ public static class DbSeeder
         db.SaveChanges();
         logger.LogInformation("Admin-account geseed: {Email}", email);
     }
+
+    /// <summary>
+    /// Seedt optioneel een <b>operator</b> (SystemAdmin) uit de sectie "Seed"
+    /// (<c>OperatorEmail</c>/<c>OperatorPassword</c>). De operator maakt organisaties
+    /// (tenants) aan met hun eerste tenant-admin. Niet gezet = geen operator geseed.
+    /// </summary>
+    public static void SeedOperator(AppDbContext db, IConfiguration config, ILogger logger)
+    {
+        var email = config["Seed:OperatorEmail"]?.Trim().ToLowerInvariant();
+        var password = config["Seed:OperatorPassword"];
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            return; // operator is optioneel
+
+        // Al een operator? Dan niets doen (idempotent).
+        if (db.Users.Any(u => u.Role == UserRole.SystemAdmin))
+            return;
+
+        if (db.Users.Any(u => u.Email == email))
+        {
+            logger.LogWarning("Operator {Email} bestaat al als gebruiker — niet aangepast.", email);
+            return;
+        }
+
+        db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            TenantId = Organization.DefaultId, // de operator woont in de default-organisatie
+            Email = email,
+            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, workFactor: 12),
+            Role = UserRole.SystemAdmin,
+            CreatedAt = DateTime.UtcNow,
+        });
+        db.SaveChanges();
+        logger.LogInformation("Operator (SystemAdmin) geseed: {Email}", email);
+    }
 }

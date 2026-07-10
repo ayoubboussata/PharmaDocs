@@ -156,6 +156,8 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IKnowledgeRepository, KnowledgeRepository>();
 builder.Services.AddScoped<IKnowledgeService, KnowledgeService>();
+builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 
 // --- Web API ---
 builder.Services.AddControllers();
@@ -210,8 +212,10 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 
     // Eerste admin seeden (registratie is admin-only) uit de sectie "Seed".
-    DbSeeder.SeedAdmin(db, app.Configuration,
-        scope.ServiceProvider.GetRequiredService<ILogger<Program>>());
+    var seedLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    DbSeeder.SeedAdmin(db, app.Configuration, seedLogger);
+    // Optioneel: een operator (SystemAdmin) die organisaties/tenants aanmaakt.
+    DbSeeder.SeedOperator(db, app.Configuration, seedLogger);
 }
 
 // --- HTTP-pipeline ---
