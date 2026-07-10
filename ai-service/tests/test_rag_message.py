@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.rag import _build_user_message
+from app.rag import _build_user_message, _system_prompt
 
 
 def test_met_fragmenten_bevat_vraag_en_bronnen():
@@ -25,3 +25,17 @@ def test_zonder_fragmenten_zegt_expliciet_niets_gevonden():
 
     assert "Bestaat er een fietsvergoeding?" in bericht
     assert "geen relevante fragmenten" in bericht.lower()
+
+
+def test_systeemprompt_vult_de_apotheeknaam_in():
+    # MT6: de placeholder wordt vervangen door de naam van de eigen apotheek.
+    prompt = _system_prompt("Apotheek Zonnebloem")
+    assert "Apotheek Zonnebloem" in prompt
+    assert "{{organisatie}}" not in prompt
+
+
+def test_systeemprompt_valt_terug_op_neutrale_naam():
+    for leeg in (None, "", "   "):
+        prompt = _system_prompt(leeg)
+        assert "de apotheek" in prompt
+        assert "{{organisatie}}" not in prompt

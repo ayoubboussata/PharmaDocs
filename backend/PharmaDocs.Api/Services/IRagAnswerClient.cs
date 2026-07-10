@@ -10,5 +10,6 @@ public sealed record RagContext(string SourceName, string Content);
 public interface IRagAnswerClient
 {
     Task<string> AnswerAsync(
-        string question, IReadOnlyList<RagContext> contexts, CancellationToken ct = default);
+        string question, IReadOnlyList<RagContext> contexts, string organizationName,
+        CancellationToken ct = default);
 }

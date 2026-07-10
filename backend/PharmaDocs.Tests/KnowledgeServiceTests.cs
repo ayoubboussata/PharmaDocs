@@ -18,7 +18,16 @@ public class KnowledgeServiceTests
         var repo = new Mock<IKnowledgeRepository>();
         var embed = new Mock<IEmbeddingClient>();
         var answer = new Mock<IRagAnswerClient>();
-        var svc = new KnowledgeService(repo.Object, embed.Object, answer.Object, TestData.Tenant());
+
+        // De eigen apotheek van de tenant (MT6): de naam gaat mee naar de assistent.
+        var orgs = new Mock<IOrganizationRepository>();
+        orgs.Setup(o => o.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Organization
+            {
+                Id = FixedTenantContext.Id, Name = "Test-Apotheek", Slug = "test-apotheek",
+            });
+
+        var svc = new KnowledgeService(repo.Object, embed.Object, answer.Object, orgs.Object, TestData.Tenant());
         return (svc, repo, embed, answer);
     }
 
@@ -49,7 +58,7 @@ public class KnowledgeServiceTests
                 new("openingsuren.pdf", "Wij openen om 9u.", 0.10),
                 new("openingsuren.pdf", "Op zondag gesloten.", 0.22),
             });
-        answer.Setup(a => a.AnswerAsync(vraag, It.IsAny<IReadOnlyList<RagContext>>(), It.IsAny<CancellationToken>()))
+        answer.Setup(a => a.AnswerAsync(vraag, It.IsAny<IReadOnlyList<RagContext>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("Om 9u; zondag gesloten (bron: openingsuren.pdf).");
 
         var result = await svc.AskAsync(vraag);
@@ -68,7 +77,7 @@ public class KnowledgeServiceTests
             .ReturnsAsync(vector);
         repo.Setup(r => r.SearchAsync(It.IsAny<float[]>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<RetrievedChunk> { new("koelketen.pdf", "Bewaar tussen 2 en 8 °C.", 0.05) });
-        answer.Setup(a => a.AnswerAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<RagContext>>(), It.IsAny<CancellationToken>()))
+        answer.Setup(a => a.AnswerAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<RagContext>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("2–8 °C (bron: koelketen.pdf).");
 
         await svc.AskAsync("Hoe bewaar ik koelkastmedicatie?");
@@ -78,7 +87,27 @@ public class KnowledgeServiceTests
             It.IsAny<string>(),
             It.Is<IReadOnlyList<RagContext>>(c =>
                 c.Count == 1 && c[0].SourceName == "koelketen.pdf" && c[0].Content.Contains("2 en 8")),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Ask_geeft_de_naam_van_de_eigen_apotheek_door_aan_de_assistent()
+    {
+        var (svc, repo, embed, answer) = Build();
+        embed.Setup(e => e.EmbedQueryAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { 0.5f });
+        repo.Setup(r => r.SearchAsync(It.IsAny<float[]>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<RetrievedChunk>());
+        answer.Setup(a => a.AnswerAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<RagContext>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("antwoord");
+
+        await svc.AskAsync("Een vraag");
+
+        // MT6: de assistent krijgt de naam van de apotheek van de tenant mee.
+        answer.Verify(a => a.AnswerAsync(
+            It.IsAny<string>(), It.IsAny<IReadOnlyList<RagContext>>(),
+            "Test-Apotheek", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // --- IngestAsync ---

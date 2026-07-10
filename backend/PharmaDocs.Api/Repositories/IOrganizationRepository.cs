@@ -11,6 +11,9 @@ public interface IOrganizationRepository
     /// <summary>Bestaat er al een organisatie met deze slug?</summary>
     Task<bool> SlugExistsAsync(string slug, CancellationToken ct = default);
 
+    /// <summary>De organisatie met deze id, of null.</summary>
+    Task<Organization?> GetByIdAsync(Guid id, CancellationToken ct = default);
+
     /// <summary>Voegt een organisatie toe en bewaart meteen.</summary>
     Task AddAsync(Organization organization, CancellationToken ct = default);
 
