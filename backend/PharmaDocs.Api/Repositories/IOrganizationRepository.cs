@@ -19,4 +19,11 @@ public interface IOrganizationRepository
 
     /// <summary>Alle organisaties, nieuwste eerst.</summary>
     Task<IReadOnlyList<Organization>> GetAllAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Verwijdert een organisatie <b>met al haar data</b> (facturen + extractie, kennisstukken,
+    /// gebruikers), in één transactie — GDPR-offboarding. De tenant-filter wordt bewust
+    /// genegeerd omdat een operator een ándere tenant dan de zijne wist.
+    /// </summary>
+    Task DeleteCascadeAsync(Guid id, CancellationToken ct = default);
 }

@@ -39,4 +39,18 @@ public class OrganizationsController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<OrganizationResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<OrganizationResponse>>> GetAll(CancellationToken ct)
         => Ok(await _service.GetAllAsync(ct));
+
+    /// <summary>
+    /// Verwijdert een organisatie met <b>al haar data</b> (facturen, kennisbank, gebruikers)
+    /// — GDPR-offboarding. Onomkeerbaar. De standaardorganisatie kan niet verwijderd worden.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var deleted = await _service.DeleteAsync(id, ct);
+        return deleted ? NoContent() : NotFound();
+    }
 }

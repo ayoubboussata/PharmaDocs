@@ -27,4 +27,20 @@ public class OrganizationRepository : IOrganizationRepository
             .AsNoTracking()
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync(ct);
+
+    public async Task DeleteCascadeAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
+        // Volgorde respecteert de Restrict-FK's naar Organizations (die als laatste weg).
+        // IgnoreQueryFilters: de operator wist een ándere tenant dan zijn eigen, dus de
+        // global query filter (op zijn tenant) mag hier niet gelden.
+        // Facturen: de extractie en lijnitems verdwijnen mee via de DB-cascade.
+        await _db.Documents.IgnoreQueryFilters().Where(d => d.TenantId == id).ExecuteDeleteAsync(ct);
+        await _db.KnowledgeChunks.IgnoreQueryFilters().Where(c => c.TenantId == id).ExecuteDeleteAsync(ct);
+        await _db.Users.Where(u => u.TenantId == id).ExecuteDeleteAsync(ct);
+        await _db.Organizations.Where(o => o.Id == id).ExecuteDeleteAsync(ct);
+
+        await tx.CommitAsync(ct);
+    }
 }
