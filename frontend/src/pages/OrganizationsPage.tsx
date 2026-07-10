@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { AxiosError } from 'axios'
-import { Building2, Plus, CheckCircle2 } from 'lucide-react'
+import { Building2, Plus, CheckCircle2, Trash2 } from 'lucide-react'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import { PageHeader } from '../components/ui/PageHeader'
 import { Button } from '../components/ui/Button'
 import { Spinner } from '../components/ui/Spinner'
@@ -11,6 +12,7 @@ const inputClass =
   'w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-fg placeholder:text-subtle transition-colors focus:border-accent'
 
 export function OrganizationsPage() {
+  const { organization: ownOrganization } = useAuth()
   const [name, setName] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
@@ -20,6 +22,7 @@ export function OrganizationsPage() {
 
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [listLoading, setListLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -58,6 +61,27 @@ export function OrganizationsPage() {
       else setError('Er ging iets mis. Probeer het opnieuw.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleDelete(org: Organization) {
+    const confirmed = window.confirm(
+      `"${org.name}" en ál haar data (facturen, kennisbank, gebruikers) definitief verwijderen? Dit kan niet ongedaan gemaakt worden.`,
+    )
+    if (!confirmed) return
+
+    setError(null)
+    setDeletingId(org.id)
+    try {
+      await api.delete(`/organizations/${org.id}`)
+      setOrganizations((prev) => prev.filter((o) => o.id !== org.id))
+    } catch (err) {
+      const status = err instanceof AxiosError ? err.response?.status : undefined
+      if (status === 400) setError('Deze organisatie kan niet verwijderd worden.')
+      else if (status === 401 || status === 403) setError('Enkel een operator mag organisaties verwijderen.')
+      else setError('Verwijderen mislukt. Probeer het opnieuw.')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -154,20 +178,35 @@ export function OrganizationsPage() {
             <p className="py-8 text-center text-sm text-muted">Nog geen organisaties aangemaakt.</p>
           ) : (
             <ul className="divide-y divide-line">
-              {organizations.map((org) => (
-                <li key={org.id} className="flex items-center gap-3 py-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-elevated text-muted">
-                    <Building2 size={16} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-fg">{org.name}</span>
-                    <span className="block truncate text-xs text-subtle">{org.slug}</span>
-                  </span>
-                  <span className="shrink-0 text-xs text-subtle">
-                    {new Date(org.createdAt).toLocaleDateString('nl-BE')}
-                  </span>
-                </li>
-              ))}
+              {organizations.map((org) => {
+                // De eigen apotheek van de operator kan niet verwijderd worden.
+                const isOwn = org.name === ownOrganization
+                return (
+                  <li key={org.id} className="flex items-center gap-3 py-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-elevated text-muted">
+                      <Building2 size={16} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-fg">{org.name}</span>
+                      <span className="block truncate text-xs text-subtle">{org.slug}</span>
+                    </span>
+                    <span className="shrink-0 text-xs text-subtle">
+                      {new Date(org.createdAt).toLocaleDateString('nl-BE')}
+                    </span>
+                    {!isOwn && (
+                      <button
+                        onClick={() => handleDelete(org)}
+                        disabled={deletingId === org.id}
+                        aria-label={`${org.name} verwijderen`}
+                        title="Apotheek verwijderen (GDPR)"
+                        className="shrink-0 rounded-md p-1.5 text-subtle transition-colors hover:bg-danger-soft hover:text-danger disabled:opacity-50"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>

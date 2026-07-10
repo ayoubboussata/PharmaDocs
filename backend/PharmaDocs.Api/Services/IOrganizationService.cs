@@ -15,4 +15,10 @@ public interface IOrganizationService
 
     /// <summary>Overzicht van alle organisaties (operator-overzicht).</summary>
     Task<IReadOnlyList<OrganizationResponse>> GetAllAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Verwijdert een organisatie met al haar data (GDPR-offboarding). Geeft <c>false</c>
+    /// als de organisatie niet bestaat. De standaardorganisatie kan niet verwijderd worden.
+    /// </summary>
+    Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
 }

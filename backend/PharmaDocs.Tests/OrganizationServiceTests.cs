@@ -77,4 +77,38 @@ public class OrganizationServiceTests
         await Assert.ThrowsAsync<ConflictException>(() => svc.ProvisionAsync(Req()));
         users.Verify(u => u.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    // --- DeleteAsync (GDPR-offboarding) ---
+
+    [Fact]
+    public async Task Delete_standaardorganisatie_wordt_geweigerd()
+    {
+        var (svc, orgs, _) = Build();
+
+        await Assert.ThrowsAsync<BadRequestException>(() => svc.DeleteAsync(Organization.DefaultId));
+
+        orgs.Verify(o => o.DeleteCascadeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Delete_onbekende_organisatie_geeft_false()
+    {
+        var (svc, orgs, _) = Build();
+        orgs.Setup(o => o.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((Organization?)null);
+
+        Assert.False(await svc.DeleteAsync(Guid.NewGuid()));
+        orgs.Verify(o => o.DeleteCascadeAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Delete_bestaande_organisatie_wist_ze_met_al_haar_data()
+    {
+        var (svc, orgs, _) = Build();
+        var id = Guid.NewGuid();
+        orgs.Setup(o => o.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Organization { Id = id, Name = "Weg", Slug = "weg" });
+
+        Assert.True(await svc.DeleteAsync(id));
+        orgs.Verify(o => o.DeleteCascadeAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

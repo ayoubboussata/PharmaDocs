@@ -65,6 +65,21 @@ public class OrganizationService : IOrganizationService
         return organizations.Select(ToResponse).ToList();
     }
 
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        // De standaardorganisatie draagt de operator + de demodata: nooit verwijderen
+        // (anders sluit de operator zichzelf buiten).
+        if (id == Organization.DefaultId)
+            throw new BadRequestException("De standaardorganisatie kan niet verwijderd worden.");
+
+        var organization = await _organizations.GetByIdAsync(id, ct);
+        if (organization is null)
+            return false;
+
+        await _organizations.DeleteCascadeAsync(id, ct);
+        return true;
+    }
+
     private static OrganizationResponse ToResponse(Organization o) =>
         new(o.Id, o.Name, o.Slug, o.CreatedAt);
 
