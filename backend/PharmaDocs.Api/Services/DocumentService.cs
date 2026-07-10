@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using PharmaDocs.Api.Common;
 using PharmaDocs.Api.Common.Exceptions;
 using PharmaDocs.Api.Common.Mapping;
 using PharmaDocs.Api.DTOs.Documents;
@@ -12,7 +13,6 @@ namespace PharmaDocs.Api.Services;
 
 public class DocumentService : IDocumentService
 {
-    private const long MaxBytes = 10 * 1024 * 1024; // 10 MB, gelijk aan de AI-service
     private const int MaxLineItems = 500;            // bovengrens per factuur (L5)
 
     private readonly IDocumentRepository _repository;
@@ -43,7 +43,7 @@ public class DocumentService : IDocumentService
 
     public async Task<DocumentDetailDto> UploadAndExtractAsync(IFormFile file, Guid userId, CancellationToken ct = default)
     {
-        ValidateUpload(file);
+        PdfUploadValidator.Validate(file);
 
         // 1. Document eerst als Pending vastleggen: de upload is nu veilig bewaard,
         //    ongeacht wat er met de AI-extractie gebeurt.
@@ -209,28 +209,6 @@ public class DocumentService : IDocumentService
         if (value.Contains(';') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
             return $"\"{value.Replace("\"", "\"\"")}\"";
         return value;
-    }
-
-    private static void ValidateUpload(IFormFile file)
-    {
-        if (file is null || file.Length == 0)
-            throw new BadRequestException("Geen bestand ontvangen.");
-        if (file.Length > MaxBytes)
-            throw new PayloadTooLargeException("Bestand te groot (max. 10 MB).");
-
-        var contentType = file.ContentType;
-        var isPdf = contentType is "application/pdf" or "application/octet-stream"
-            || file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
-        if (!isPdf)
-            throw new UnsupportedMediaTypeException("Enkel PDF-bestanden worden ondersteund.");
-
-        // Magic bytes (L5): een echt PDF begint met "%PDF". Weert een niet-PDF met
-        // een misleidende .pdf-naam of octet-stream-type.
-        Span<byte> header = stackalloc byte[4];
-        using var probe = file.OpenReadStream();
-        var read = probe.ReadAtLeast(header, 4, throwOnEndOfStream: false);
-        if (read < 4 || header[0] != 0x25 || header[1] != 0x50 || header[2] != 0x44 || header[3] != 0x46)
-            throw new UnsupportedMediaTypeException("Het bestand is geen geldig PDF (ontbrekende %PDF-header).");
     }
 
     // Sleutels (Id) bewust niet zelf zetten: het zijn nieuwe entiteiten die via de

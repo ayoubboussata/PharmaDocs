@@ -9,11 +9,13 @@ public sealed record RetrievedChunk(string SourceName, string Content, double Di
 /// <summary>Data-toegang voor de RAG-kennisstukken (pgvector).</summary>
 public interface IKnowledgeRepository
 {
-    /// <summary>Verwijdert alle stukken van een bron (voor herindexeren).</summary>
-    Task DeleteBySourceAsync(string sourceName, CancellationToken ct = default);
-
-    /// <summary>Voegt stukken toe en bewaart.</summary>
-    Task AddChunksAsync(IEnumerable<KnowledgeChunk> chunks, CancellationToken ct = default);
+    /// <summary>
+    /// Vervangt alle stukken van een bron door de nieuwe set, in één transactie
+    /// (herindexeren): eerst de oude weg, dan de nieuwe erin. Zo kan een herindexering
+    /// nooit half slagen en de bron leeg achterlaten.
+    /// </summary>
+    Task ReplaceSourceAsync(
+        string sourceName, IReadOnlyList<KnowledgeChunk> chunks, CancellationToken ct = default);
 
     /// <summary>Overzicht van geïndexeerde bronnen (zonder de vectoren te laden).</summary>
     Task<IReadOnlyList<KnowledgeSourceDto>> GetSourcesAsync(CancellationToken ct = default);

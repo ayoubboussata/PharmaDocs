@@ -35,7 +35,7 @@ env:
   ACR_NAME: crpharmadocse767d1
 
 jobs:
-  # ── 0) Backend-tests: moeten slagen vóór we bouwen/deployen ───────────────
+  # ── 0a) Backend-tests: moeten slagen vóór we bouwen/deployen ──────────────
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -47,9 +47,24 @@ jobs:
       - name: Backend-tests (xUnit)
         run: dotnet test backend/PharmaDocs.Tests/PharmaDocs.Tests.csproj --configuration Release
 
+  # ── 0b) AI-service-tests (pytest): chunking, RAG-bericht, veilige degradatie ─
+  test-ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Afhankelijkheden installeren (runtime + pytest)
+        run: pip install -r ai-service/requirements-dev.txt
+      - name: AI-service-tests (pytest)
+        working-directory: ai-service
+        run: python -m pytest -q
+
   # ── 1) De drie images parallel bouwen en pushen ──────────────────────────
   build-and-push:
-    needs: test
+    needs: [test, test-ai]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
