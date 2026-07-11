@@ -19,7 +19,7 @@ public class AuthServiceTests
     {
         var users = new Mock<IUserRepository>();
         var tokens = new Mock<ITokenService>();
-        tokens.Setup(t => t.CreateToken(It.IsAny<User>(), It.IsAny<string>()))
+        tokens.Setup(t => t.CreateToken(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(new TokenResult("jwt-token", DateTime.UtcNow.AddMinutes(60)));
 
         var orgs = new Mock<IOrganizationRepository>();
@@ -105,6 +105,7 @@ public class AuthServiceTests
         Assert.Equal("jan@apotheek.be", result.Email);
         Assert.Equal("Admin", result.Role);
         Assert.Equal("Test-Apotheek", result.Organization); // apotheeknaam in de sessie
-        tokens.Verify(t => t.CreateToken(It.IsAny<User>(), It.IsAny<string>()), Times.Once);
+        Assert.Equal("#2563eb", result.OrganizationColor);  // accentkleur (standaard) in de sessie
+        tokens.Verify(t => t.CreateToken(It.IsAny<User>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 }

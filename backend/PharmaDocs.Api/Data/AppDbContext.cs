@@ -45,6 +45,8 @@ public class AppDbContext : DbContext
         {
             entity.Property(o => o.Name).IsRequired().HasMaxLength(200);
             entity.Property(o => o.Slug).IsRequired().HasMaxLength(120);
+            entity.Property(o => o.AccentColor).IsRequired().HasMaxLength(9)
+                  .HasDefaultValue(Organization.DefaultAccentColor);
             entity.HasIndex(o => o.Slug).IsUnique();
         });
 

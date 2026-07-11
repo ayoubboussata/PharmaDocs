@@ -14,7 +14,7 @@ public class TokenService : ITokenService
 
     public TokenService(IOptions<JwtSettings> settings) => _settings = settings.Value;
 
-    public TokenResult CreateToken(User user, string organizationName)
+    public TokenResult CreateToken(User user, string organizationName, string organizationColor)
     {
         var expiresAt = DateTime.UtcNow.AddMinutes(_settings.ExpiryMinutes);
 
@@ -25,8 +25,9 @@ public class TokenService : ITokenService
             // Tenant (apotheek) waartoe de gebruiker hoort — voedt de multi-tenant
             // isolatie (ITenantContext + EF global query filter).
             new Claim("tenant", user.TenantId.ToString()),
-            // Naam van de apotheek — puur voor weergave in de front-end (/auth/me).
+            // Naam + accentkleur van de apotheek — puur voor weergave/branding in de front-end.
             new Claim("org", organizationName),
+            new Claim("org_color", organizationColor),
             // Rol als "role"-claim; Program.cs zet RoleClaimType hierop zodat
             // [Authorize(Roles = "Admin")] werkt.
             new Claim("role", user.Role.ToString()),

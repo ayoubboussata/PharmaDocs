@@ -63,8 +63,10 @@ public class AuthService : IAuthService
 
         var organization = await _organizations.GetByIdAsync(user.TenantId, ct);
         var organizationName = organization?.Name ?? "de apotheek";
+        var organizationColor = organization?.AccentColor ?? Organization.DefaultAccentColor;
 
-        var token = _tokens.CreateToken(user, organizationName);
-        return new AuthResponse(token.Token, user.Email, user.Role.ToString(), organizationName, token.ExpiresAt);
+        var token = _tokens.CreateToken(user, organizationName, organizationColor);
+        return new AuthResponse(
+            token.Token, user.Email, user.Role.ToString(), organizationName, organizationColor, token.ExpiresAt);
     }
 }

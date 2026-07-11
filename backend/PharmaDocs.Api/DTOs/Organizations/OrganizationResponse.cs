@@ -5,4 +5,5 @@ public record OrganizationResponse(
     Guid Id,
     string Name,
     string Slug,
+    string AccentColor,
     DateTime CreatedAt);
