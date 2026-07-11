@@ -31,8 +31,11 @@ param imageTag string = 'latest'
 param pgAdminUser string = 'pharmadocs'
 param pgDatabaseName string = 'pharmadocs'
 
-@description('E-mail van de eerste admin (registratie is admin-only).')
+@description('E-mail van de eerste admin (tenant-admin van de default-apotheek).')
 param adminEmail string = 'admin@pharmadocs.be'
+
+@description('E-mail van de operator (SystemAdmin) die apotheken (tenants) aanmaakt.')
+param operatorEmail string = 'operator@pharmadocs.be'
 
 @secure()
 param anthropicApiKey string
@@ -44,6 +47,8 @@ param pgAdminPassword string
 param jwtKey string
 @secure()
 param adminPassword string
+@secure()
+param operatorPassword string
 
 // ── Afgeleide namen ──────────────────────────────────────────────────────
 var envName = 'cae-${namePrefix}'
@@ -250,6 +255,10 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'admin-password'
           value: adminPassword
         }
+        {
+          name: 'operator-password'
+          value: operatorPassword
+        }
       ]
     }
     template: {
@@ -277,6 +286,14 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'Seed__AdminPassword'
               secretRef: 'admin-password'
+            }
+            {
+              name: 'Seed__OperatorEmail'
+              value: operatorEmail
+            }
+            {
+              name: 'Seed__OperatorPassword'
+              secretRef: 'operator-password'
             }
             {
               name: 'AiService__BaseUrl'

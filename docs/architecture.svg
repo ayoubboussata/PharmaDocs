@@ -36,12 +36,13 @@
   <!-- API (hub, accent) -->
   <rect x="326" y="86" width="234" height="68" rx="10" fill="#eaf1ff" stroke="#bcd0ff"/>
   <text x="344" y="116" font-size="13.5" font-weight="600" fill="#1d4ed8">ASP.NET Core Web API · .NET 8</text>
-  <text x="344" y="135" font-size="11" fill="#3b6fd4">orchestrator · JWT-auth</text>
+  <text x="344" y="135" font-size="11" fill="#3b6fd4">orchestrator · JWT-auth · multi-tenant</text>
 
   <!-- Postgres -->
   <rect x="644" y="86" width="186" height="68" rx="10" fill="#f8fafc" stroke="#e6e8ec"/>
   <text x="660" y="116" font-size="13.5" font-weight="600" fill="#0f172a">PostgreSQL 16</text>
   <text x="660" y="135" font-size="11" fill="#64748b">+ pgvector (embeddings)</text>
+  <text x="644" y="174" font-size="10" fill="#64748b">tenant-geïsoleerd · EF query filter</text>
 
   <!-- Python -->
   <rect x="326" y="236" width="234" height="68" rx="10" fill="#f8fafc" stroke="#e6e8ec"/>

@@ -28,9 +28,12 @@ ACR="crpharmadocs${SUFFIX}"          # globaal uniek, enkel letters/cijfers
 PG="pg-pharmadocs-${SUFFIX}"
 PG_PASSWORD="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9')Aa1!"
 JWT_KEY="$(openssl rand -base64 48)"
-# Eerste admin (registratie is admin-only). Wachtwoord gegenereerd + als secret bewaard.
+# Eerste admin (tenant-admin van de default-apotheek). Wachtwoord gegenereerd + bewaard.
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@pharmadocs.be}"
 ADMIN_PASSWORD="$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9')Aa1!"
+# Operator (SystemAdmin) die apotheken (tenants) aanmaakt. Idem gegenereerd + bewaard.
+OPERATOR_EMAIL="${OPERATOR_EMAIL:-operator@pharmadocs.be}"
+OPERATOR_PASSWORD="$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9')Aa1!"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Op Windows (Git Bash) verstaat de native az-CLI geen /d/-paden → omzetten naar D:/.
@@ -67,9 +70,11 @@ az deployment group create -g "$RG" -n "$DEPLOYMENT" \
   --template-file "$ROOT/infra/main.bicep" \
   --parameters \
     location="$LOCATION" acrLocation="$ACR_LOCATION" \
-    acrName="$ACR" pgServerName="$PG" imageTag=latest adminEmail="$ADMIN_EMAIL" \
+    acrName="$ACR" pgServerName="$PG" imageTag=latest \
+    adminEmail="$ADMIN_EMAIL" operatorEmail="$OPERATOR_EMAIL" \
     anthropicApiKey="$ANTHROPIC_API_KEY" voyageApiKey="$VOYAGE_API_KEY" \
-    pgAdminPassword="$PG_PASSWORD" jwtKey="$JWT_KEY" adminPassword="$ADMIN_PASSWORD" \
+    pgAdminPassword="$PG_PASSWORD" jwtKey="$JWT_KEY" \
+    adminPassword="$ADMIN_PASSWORD" operatorPassword="$OPERATOR_PASSWORD" \
   -o none
 
 WEB_URL=$(az deployment group show -g "$RG" -n "$DEPLOYMENT" --query properties.outputs.webUrl.value -o tsv)
@@ -80,10 +85,14 @@ WEB_FQDN="${WEB_URL#https://}"
   echo "WEB_FQDN=$WEB_FQDN"
   echo "ADMIN_EMAIL=$ADMIN_EMAIL"
   echo "ADMIN_PASSWORD=$ADMIN_PASSWORD"
+  echo "OPERATOR_EMAIL=$OPERATOR_EMAIL"
+  echo "OPERATOR_PASSWORD=$OPERATOR_PASSWORD"
   echo "PG=$PG"
 } >> "$ROOT/infra/.deploy-secrets"
 
 echo ""
 echo "✅ Klaar!  Open:  $WEB_URL"
 echo "   Resource group: $RG   ·   Registry: $ACR   ·   DB: $PG"
-echo "   Admin-login: $ADMIN_EMAIL   ·   wachtwoord opgeslagen in infra/.deploy-secrets"
+echo "   Admin-login:    $ADMIN_EMAIL"
+echo "   Operator-login: $OPERATOR_EMAIL   (maakt apotheken aan)"
+echo "   Wachtwoorden opgeslagen in infra/.deploy-secrets"
