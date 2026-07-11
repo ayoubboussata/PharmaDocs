@@ -17,24 +17,30 @@ public class KnowledgeService : IKnowledgeService
     private readonly IRagAnswerClient _answerClient;
     private readonly IOrganizationRepository _organizations;
     private readonly ITenantContext _tenant;
+    private readonly ILogger<KnowledgeService> _logger;
 
     public KnowledgeService(
         IKnowledgeRepository repository,
         IEmbeddingClient embeddingClient,
         IRagAnswerClient answerClient,
         IOrganizationRepository organizations,
-        ITenantContext tenant)
+        ITenantContext tenant,
+        ILogger<KnowledgeService> logger)
     {
         _repository = repository;
         _embeddingClient = embeddingClient;
         _answerClient = answerClient;
         _organizations = organizations;
         _tenant = tenant;
+        _logger = logger;
     }
 
     public async Task<KnowledgeIngestResponse> IngestAsync(IFormFile file, CancellationToken ct = default)
     {
         PdfUploadValidator.Validate(file);
+
+        // Verbruik per apotheek loggen (MT8): basis voor kostentoewijzing/facturatie.
+        _logger.LogInformation("AI-verbruik: procedure-indexering voor tenant {TenantId}", _tenant.TenantId);
 
         // De kennisbank is bewust gedeeld en op bestandsnaam gesleuteld (re-upload =
         // herindexeren). Neem enkel het bestandsnaam-deel: zo kan een niet-browserclient
@@ -75,6 +81,9 @@ public class KnowledgeService : IKnowledgeService
     {
         if (string.IsNullOrWhiteSpace(question))
             throw new BadRequestException("Stel een vraag.");
+
+        // Verbruik per apotheek loggen (MT8): basis voor kostentoewijzing/facturatie.
+        _logger.LogInformation("AI-verbruik: kennisvraag voor tenant {TenantId}", _tenant.TenantId);
 
         // 1. Vraag embedden → 2. dichtste stukken ophalen (pgvector).
         var queryVector = await _embeddingClient.EmbedQueryAsync(question, ct);

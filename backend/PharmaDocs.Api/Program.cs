@@ -74,6 +74,11 @@ builder.Services
 builder.Services.AddAuthorization();
 
 // --- Rate limiting (M1): remt brute-force op auth en kostenmisbruik op de AI-endpoints ---
+// AI-plafond per apotheek (MT8): de dure Claude/Voyage-calls worden per tenant begrensd,
+// zodat één apotheek de kosten niet kan laten ontsporen. Configureerbaar via
+// AiRateLimit:PermitPerMinute (standaard 60/min voor de hele apotheek samen).
+var aiPermitPerMinute = builder.Configuration.GetValue<int?>("AiRateLimit:PermitPerMinute") ?? 60;
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -84,11 +89,12 @@ builder.Services.AddRateLimiter(options =>
             ClientIp(http),
             _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
 
-    // AI (duur: Claude/Voyage): per ingelogde gebruiker, anders per IP.
+    // AI (duur: Claude/Voyage): per apotheek (tenant) — een gedeeld kostenplafond voor
+    // alle medewerkers samen. Valt terug op de gebruiker/IP als er (nog) geen tenant is.
     options.AddPolicy("ai", http =>
         RateLimitPartition.GetFixedWindowLimiter(
-            UserOrIp(http),
-            _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1) }));
+            TenantOrUser(http),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = aiPermitPerMinute, Window = TimeSpan.FromMinutes(1) }));
 
     // Consistente 429 in hetzelfde JSON-formaat als de rest van de API.
     options.OnRejected = async (ctx, ct) =>
@@ -236,7 +242,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
-// Na authenticatie: de "ai"-policy partitioneert op de ingelogde gebruiker.
+// Na authenticatie: de "ai"-policy partitioneert op de apotheek (tenant-claim).
 app.UseRateLimiter();
 app.MapControllers();
 
@@ -246,7 +252,10 @@ app.Run();
 static string ClientIp(HttpContext http) =>
     http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-static string UserOrIp(HttpContext http) =>
-    http.User.FindFirst("sub")?.Value
+// AI-plafond per apotheek: partitioneer op de tenant-claim (alle medewerkers van één
+// apotheek delen het plafond). Terugval op de gebruiker en dan op het IP.
+static string TenantOrUser(HttpContext http) =>
+    http.User.FindFirst("tenant")?.Value
+    ?? http.User.FindFirst("sub")?.Value
     ?? http.Connection.RemoteIpAddress?.ToString()
     ?? "unknown";

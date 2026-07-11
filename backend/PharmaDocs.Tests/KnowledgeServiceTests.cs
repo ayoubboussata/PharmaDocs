@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using PharmaDocs.Api.Common.Exceptions;
 using PharmaDocs.Api.Models;
@@ -27,7 +28,9 @@ public class KnowledgeServiceTests
                 Id = FixedTenantContext.Id, Name = "Test-Apotheek", Slug = "test-apotheek",
             });
 
-        var svc = new KnowledgeService(repo.Object, embed.Object, answer.Object, orgs.Object, TestData.Tenant());
+        var svc = new KnowledgeService(
+            repo.Object, embed.Object, answer.Object, orgs.Object, TestData.Tenant(),
+            NullLogger<KnowledgeService>.Instance);
         return (svc, repo, embed, answer);
     }
 

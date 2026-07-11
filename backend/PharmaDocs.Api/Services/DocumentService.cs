@@ -48,6 +48,9 @@ public class DocumentService : IDocumentService
     {
         PdfUploadValidator.Validate(file);
 
+        // Verbruik per apotheek loggen (MT8): basis voor kostentoewijzing/facturatie.
+        _logger.LogInformation("AI-verbruik: factuurextractie voor tenant {TenantId}", _tenant.TenantId);
+
         // 1. Document eerst als Pending vastleggen: de upload is nu veilig bewaard,
         //    ongeacht wat er met de AI-extractie gebeurt.
         var document = new Document
