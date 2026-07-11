@@ -47,6 +47,12 @@ Procedure-documenten (openingsuren, terugbetaling, koelketen…) worden in stukk
 
 De interface maakt de twee gescheiden gegevensstromen expliciet zichtbaar: **facturen** gaan naar de facturentabel, **procedures** naar de kennisbank. De assistent kan enkel antwoorden over wat in de kennisbank geïndexeerd is.
 
+### 3 · Multi-tenant (SaaS voor meerdere apotheken)
+
+Meerdere apotheekbedrijven draaien op één installatie met **strikt gescheiden data**. Een **operator** maakt een apotheek (tenant) aan met haar eerste beheerder; die beheert daarna zelf zijn medewerkers. Elke apotheek heeft haar eigen facturen én kennisbank — een EF Core **global query filter** dwingt de isolatie op *elke* query af (ook de RAG-zoektocht), zodat geen enkele apotheek de data van een andere ziet. Bovendien krijgt elke apotheek haar **eigen accentkleur** in de UI, haar naam in de assistent, en een gedeeld **AI-kostenplafond**. Bij offboarding wist de operator een apotheek **met ál haar data** (GDPR — recht op vergetelheid).
+
+Rollen: **operator** (SystemAdmin — beheert de apotheken), **beheerder** (tenant-admin — beheert de medewerkers van zijn apotheek) en **medewerker**. De tenant zit in een claim van het JWT en voedt zowel de query filter als het per-tenant kostenplafond.
+
 <details>
 <summary>Licht &amp; donker thema</summary>
 
@@ -120,7 +126,10 @@ De front-end draait op `http://localhost:5173`, de API op `http://localhost:5035
 
 | Methode | Route | Auth | Omschrijving |
 | --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | 🔒 Admin | Account aanmaken (admin-only) — geeft het nieuwe account terug, géén token |
+| `POST` | `/api/auth/register` | 🔒 Admin | Medewerker aanmaken binnen de eigen apotheek (tenant-admin) — géén token |
+| `POST` | `/api/organizations` | 🔒 Operator | Nieuwe apotheek (tenant) + eerste beheerder aanmaken |
+| `GET` | `/api/organizations` | 🔒 Operator | Overzicht van de aangesloten apotheken |
+| `DELETE` | `/api/organizations/{id}` | 🔒 Operator | Apotheek met ál haar data verwijderen (GDPR-offboarding) |
 | `POST` | `/api/auth/login` | — | Inloggen, geeft een JWT terug |
 | `POST` | `/api/documents/upload` | 🔒 | Factuur-PDF uploaden → interne AI-extractie → opgeslagen document |
 | `GET` | `/api/documents` | 🔒 | Overzicht van verwerkte documenten |
@@ -166,6 +175,7 @@ PharmaDocs/
 - **De details van EF Core.** O.a. dat `ValueGeneratedOnAdd`-sleutels die je zélf invult als "bestaat al" gelezen worden (`UPDATE` i.p.v. `INSERT`) — een subtiele bug die je één keer maakt en daarna herkent.
 - **Een onderhoudbare UI-architectuur.** Semantische design-tokens als één bron van waarheid maken een licht/donker-thema triviaal, en herbruikbare primitieven houden alles consistent.
 - **Van laptop naar cloud.** De hele stack containeriseren en uitrollen op Azure Container Apps: interne vs. publieke ingress, sleutels als secrets, een beheerde PostgreSQL met de `pgvector`-extensie, en omgaan met regio- en quotabeperkingen van een abonnement.
+- **Van single- naar multi-tenant.** Isolatie als *default* maken met een EF Core **global query filter** (i.p.v. per query onthouden om te filteren) sluit de klassieke lek-bug — ook meteen op de RAG-zoektocht. De tenant reist mee in een JWT-claim en voedt zowel de filter als het per-tenant kostenplafond; onboarding en GDPR-verwijdering per klant maken er een echte SaaS van.
 
 ## Licentie
 
