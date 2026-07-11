@@ -41,6 +41,9 @@ public class OrganizationService : IOrganizationService
             Id = Guid.NewGuid(),
             Name = name,
             Slug = slug,
+            AccentColor = string.IsNullOrWhiteSpace(request.AccentColor)
+                ? Organization.DefaultAccentColor
+                : request.AccentColor.ToLowerInvariant(),
             CreatedAt = now,
         };
         await _organizations.AddAsync(organization, ct);
@@ -81,7 +84,7 @@ public class OrganizationService : IOrganizationService
     }
 
     private static OrganizationResponse ToResponse(Organization o) =>
-        new(o.Id, o.Name, o.Slug, o.CreatedAt);
+        new(o.Id, o.Name, o.Slug, o.AccentColor, o.CreatedAt);
 
     /// <summary>
     /// Maakt een URL-vriendelijke slug: kleine letters, cijfers en woordscheidingen als

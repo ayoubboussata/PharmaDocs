@@ -6,4 +6,5 @@ public record AuthResponse(
     string Email,
     string Role,
     string Organization,
+    string OrganizationColor,
     DateTime ExpiresAt);

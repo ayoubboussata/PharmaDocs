@@ -3,6 +3,7 @@ export interface SessionResponse {
   email: string
   role: string
   organization: string
+  organizationColor: string
 }
 
 export interface CreatedUserResponse {
@@ -16,6 +17,7 @@ export interface Organization {
   id: string
   name: string
   slug: string
+  accentColor: string
   createdAt: string
 }
 

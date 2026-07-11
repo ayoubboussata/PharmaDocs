@@ -13,9 +13,11 @@ const inputClass =
 
 export function OrganizationsPage() {
   const { organization: ownOrganization } = useAuth()
+  const DEFAULT_COLOR = '#2563eb'
   const [name, setName] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
   const [adminPassword, setAdminPassword] = useState('')
+  const [accentColor, setAccentColor] = useState(DEFAULT_COLOR)
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -46,12 +48,14 @@ export function OrganizationsPage() {
         name,
         adminEmail,
         adminPassword,
+        accentColor,
       })
       setOrganizations((prev) => [data, ...prev])
       setCreated(data.name)
       setName('')
       setAdminEmail('')
       setAdminPassword('')
+      setAccentColor(DEFAULT_COLOR)
     } catch (err) {
       const status = err instanceof AxiosError ? err.response?.status : undefined
       if (status === 409) setError('Er bestaat al een organisatie of account met deze gegevens.')
@@ -150,6 +154,22 @@ export function OrganizationsPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="accentColor" className="mb-1.5 block text-sm font-medium text-fg">
+                Accentkleur
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="accentColor"
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="h-9 w-12 shrink-0 cursor-pointer rounded-lg border border-line bg-canvas"
+                />
+                <span className="text-sm text-muted">{accentColor}</span>
+              </div>
+            </div>
+
             {error && <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
             {created && (
               <p className="flex items-center gap-2 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent-text">
@@ -183,7 +203,11 @@ export function OrganizationsPage() {
                 const isOwn = org.name === ownOrganization
                 return (
                   <li key={org.id} className="flex items-center gap-3 py-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-elevated text-muted">
+                    <span
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white"
+                      style={{ backgroundColor: org.accentColor }}
+                      title={org.accentColor}
+                    >
                       <Building2 size={16} />
                     </span>
                     <span className="min-w-0 flex-1">

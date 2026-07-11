@@ -8,7 +8,7 @@ public record TokenResult(string Token, DateTime ExpiresAt);
 /// <summary>Maakt JWT-access-tokens aan voor geauthenticeerde gebruikers.</summary>
 public interface ITokenService
 {
-    /// <summary>Maakt een token voor <paramref name="user"/>; <paramref name="organizationName"/>
-    /// wordt als "org"-claim opgenomen (voor de front-end, zonder extra DB-call op /me).</summary>
-    TokenResult CreateToken(User user, string organizationName);
+    /// <summary>Maakt een token voor <paramref name="user"/>; de apotheeknaam en -accentkleur
+    /// worden als "org"/"org_color"-claims opgenomen (voor de front-end, zonder extra DB-call op /me).</summary>
+    TokenResult CreateToken(User user, string organizationName, string organizationColor);
 }

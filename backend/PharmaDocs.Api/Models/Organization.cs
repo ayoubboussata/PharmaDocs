@@ -14,6 +14,9 @@ public class Organization
     /// </summary>
     public static readonly Guid DefaultId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
+    /// <summary>Standaard-accentkleur (het huidige blauw) voor tenants zonder eigen keuze.</summary>
+    public const string DefaultAccentColor = "#2563eb";
+
     public Guid Id { get; set; }
 
     /// <summary>Weergavenaam van het apotheekbedrijf (bv. "Apotheek De Wit").</summary>
@@ -21,6 +24,9 @@ public class Organization
 
     /// <summary>URL-vriendelijke, unieke sleutel (bv. "apotheek-de-wit").</summary>
     public string Slug { get; set; } = string.Empty;
+
+    /// <summary>Accentkleur van de apotheek (hex, bv. "#2563eb") — per-tenant branding (MT12).</summary>
+    public string AccentColor { get; set; } = DefaultAccentColor;
 
     /// <summary>Tijdstip van aanmaak (UTC).</summary>
     public DateTime CreatedAt { get; set; }

@@ -18,4 +18,8 @@ public record CreateOrganizationRequest(
     string AdminEmail,
 
     [Required, MinLength(8), MaxLength(128)]
-    string AdminPassword);
+    string AdminPassword,
+
+    // Optionele accentkleur (hex, bv. "#2563eb"); leeg = de standaardkleur.
+    [RegularExpression("^#[0-9a-fA-F]{6}$", ErrorMessage = "Ongeldige kleur (verwacht hex zoals #2563eb).")]
+    string? AccentColor = null);

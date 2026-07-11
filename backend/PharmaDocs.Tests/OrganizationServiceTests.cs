@@ -57,6 +57,24 @@ public class OrganizationServiceTests
     }
 
     [Fact]
+    public async Task Provision_zonder_kleur_gebruikt_de_standaard_en_met_kleur_de_gekozen()
+    {
+        var (svc, orgs, _) = Build();
+        Organization? created = null;
+        orgs.Setup(o => o.AddAsync(It.IsAny<Organization>(), It.IsAny<CancellationToken>()))
+            .Callback<Organization, CancellationToken>((o, _) => created = o).Returns(Task.CompletedTask);
+
+        // Zonder kleur → standaard.
+        await svc.ProvisionAsync(Req(email: "a@x.be"));
+        Assert.Equal(Organization.DefaultAccentColor, created!.AccentColor);
+
+        // Met kleur → die kleur (genormaliseerd naar kleine letters).
+        var result = await svc.ProvisionAsync(new CreateOrganizationRequest("Kleur BV", null, "b@x.be", "wachtwoord123", "#FF8800"));
+        Assert.Equal("#ff8800", created!.AccentColor);
+        Assert.Equal("#ff8800", result.AccentColor);
+    }
+
+    [Fact]
     public async Task Provision_bestaande_email_geeft_Conflict_zonder_org_aan_te_maken()
     {
         var (svc, orgs, users) = Build();

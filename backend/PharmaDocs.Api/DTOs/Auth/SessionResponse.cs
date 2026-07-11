@@ -5,4 +5,4 @@ namespace PharmaDocs.Api.DTOs.Auth;
 /// httpOnly-cookie (L1) en is voor JavaScript onbereikbaar. <paramref name="Organization"/>
 /// is de naam van de apotheek (tenant) waartoe de gebruiker behoort.
 /// </summary>
-public record SessionResponse(string Email, string Role, string Organization);
+public record SessionResponse(string Email, string Role, string Organization, string OrganizationColor);
