@@ -116,3 +116,23 @@ jobs:
             echo "▶ pharmadocs-${svc} → ${IMAGE}"
             az containerapp update -g "${AZURE_RG}" -n "pharmadocs-${svc}" --image "${IMAGE}" -o none
           done
+
+      # Operator (SystemAdmin) seeden — het account dat apotheken (tenants) aanmaakt.
+      # Zet de seed als secret/env-var op de api-container; de seeder maakt de operator
+      # één keer aan bij de herstart (idempotent). Overgeslagen als het wachtwoord-secret
+      # niet is ingesteld. Vereist repo-secret: SEED_OPERATOR_PASSWORD (e-mail optioneel
+      # via SEED_OPERATOR_EMAIL, standaard operator@pharmadocs.be).
+      - name: Operator (SystemAdmin) seeden
+        env:
+          OP_EMAIL: ${{ secrets.SEED_OPERATOR_EMAIL || 'operator@pharmadocs.be' }}
+          OP_PASSWORD: ${{ secrets.SEED_OPERATOR_PASSWORD }}
+        run: |
+          if [ -z "${OP_PASSWORD}" ]; then
+            echo "ℹ️  SEED_OPERATOR_PASSWORD niet ingesteld — operator-seed overgeslagen."
+            exit 0
+          fi
+          az containerapp secret set -g "${AZURE_RG}" -n pharmadocs-api \
+            --secrets "operator-password=${OP_PASSWORD}" -o none
+          az containerapp update -g "${AZURE_RG}" -n pharmadocs-api \
+            --set-env-vars "Seed__OperatorEmail=${OP_EMAIL}" "Seed__OperatorPassword=secretref:operator-password" -o none
+          echo "✅ Operator-seed toegepast voor ${OP_EMAIL} (aangemaakt bij de herstart als hij nog niet bestaat)."
