@@ -68,6 +68,11 @@ public static class DbSeeder
     /// Seedt optioneel een <b>operator</b> (SystemAdmin) uit de sectie "Seed"
     /// (<c>OperatorEmail</c>/<c>OperatorPassword</c>). De operator maakt organisaties
     /// (tenants) aan met hun eerste tenant-admin. Niet gezet = geen operator geseed.
+    /// <para>
+    /// <b>Zelfhelend</b>: bestaat het operator-account al, dan wordt het op de seed-waarden
+    /// gezet (rol = SystemAdmin, wachtwoord = de seed). Zo maakt een her-deploy een fout of
+    /// verlopen operator-wachtwoord altijd terug goed — de seed is de bron van waarheid.
+    /// </para>
     /// </summary>
     public static void SeedOperator(AppDbContext db, IConfiguration config, ILogger logger)
     {
@@ -77,13 +82,16 @@ public static class DbSeeder
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return; // operator is optioneel
 
-        // Al een operator? Dan niets doen (idempotent).
-        if (db.Users.Any(u => u.Role == UserRole.SystemAdmin))
-            return;
+        var passwordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, workFactor: 12);
 
-        if (db.Users.Any(u => u.Email == email))
+        var existing = db.Users.FirstOrDefault(u => u.Email == email);
+        if (existing is not null)
         {
-            logger.LogWarning("Operator {Email} bestaat al als gebruiker — niet aangepast.", email);
+            // Zorg dat het account operator is én dat het wachtwoord met de seed matcht.
+            existing.Role = UserRole.SystemAdmin;
+            existing.PasswordHash = passwordHash;
+            db.SaveChanges();
+            logger.LogInformation("Operator (SystemAdmin) bijgewerkt uit de seed: {Email}", email);
             return;
         }
 
@@ -92,7 +100,7 @@ public static class DbSeeder
             Id = Guid.NewGuid(),
             TenantId = Organization.DefaultId, // de operator woont in de default-organisatie
             Email = email,
-            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, workFactor: 12),
+            PasswordHash = passwordHash,
             Role = UserRole.SystemAdmin,
             CreatedAt = DateTime.UtcNow,
         });
